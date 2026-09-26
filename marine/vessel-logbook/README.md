@@ -32,3 +32,7 @@ The application itself is public source here, but real vessel/customer/job recor
 ## Audit note
 
 This repository intentionally stores the application shell, not private operational data or company records. Calculations and generated reports should still be checked against the vessel's hydrostatic data and company procedures before operational use.
+
+## Public sanitization
+
+The public GitHub copy uses generic inspection branding and generic form/order identifiers. The original recovered working file remains private and was not placed in a public archive. This prevents the open-source copy from carrying employer-specific branding or operational identifiers.

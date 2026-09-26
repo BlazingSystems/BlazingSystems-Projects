@@ -60,7 +60,7 @@
 // -------------------- WIFI AP -----------------------
 
 const char* AP_SSID = "ESP8266-Thermostat";
-const char* AP_PASS = "thermostat";   // 8+ characters
+char AP_PASS[24] = "";  // generated per device on boot
 
 ESP8266WebServer server(80);
 
@@ -998,3 +998,78 @@ long extractLong(String body, String key, long fallback) {
 void setup() {
 
   Serial.begin(115200);
+  delay(100);
+
+  pinMode(RELAY_PIN, OUTPUT);
+
+  // Start safely OFF.
+  bool offOutput = RELAY_ACTIVE_LOW ? HIGH : LOW;
+  digitalWrite(RELAY_PIN, offOutput);
+
+  relayState = false;
+  relayChangedAt = millis();
+
+  loadSettings();
+
+  sensors.begin();
+  sensors.setResolution(12);
+
+  // Wi-Fi Access Point
+  // Avoid one universal public default password across every compiled device.
+  snprintf(AP_PASS, sizeof(AP_PASS), "BlazeTherm-%06lX", (unsigned long)ESP.getChipId());
+  WiFi.mode(WIFI_AP);
+
+  WiFi.softAP(AP_SSID, AP_PASS);
+
+  Serial.println();
+  Serial.println("================================");
+  Serial.println("ESP8266 THERMOSTAT");
+  Serial.println("================================");
+  Serial.print("AP SSID: ");
+  Serial.println(AP_SSID);
+  Serial.print("AP Password: ");
+  Serial.println(AP_PASS);
+  Serial.print("IP: ");
+  Serial.println(WiFi.softAPIP());
+
+  // Web routes
+  server.on("/", HTTP_GET, handleRoot);
+  server.on("/api/status", HTTP_GET, handleStatus);
+  server.on("/api/settings", HTTP_POST, handleSettings);
+  server.on("/api/calibration", HTTP_POST, handleCalibration);
+  server.on("/api/manual", HTTP_GET, handleManual);
+  server.on("/api/auto", HTTP_GET, handleAuto);
+
+  server.begin();
+
+  Serial.println("Web server started.");
+
+  // Initial sensor reading
+  sensors.requestTemperatures();
+
+  float t = sensors.getTempCByIndex(0);
+
+  if (t != DEVICE_DISCONNECTED_C &&
+      t >= -55 &&
+      t <= 125) {
+
+    sensorOK = true;
+    rawTemperature = t;
+    temperatureC = rawTemperature + calibrationOffset;
+  }
+
+  lastSensorRead = millis();
+}
+
+// -------------------- LOOP ----------------------------
+
+void loop() {
+
+  server.handleClient();
+
+  readTemperature();
+
+  thermostatControl();
+
+  yield();
+}

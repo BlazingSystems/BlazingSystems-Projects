@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DraftSight Trainer V3 — Audited Draft Reading Simulator</title>
+<style>
+:root{--bg:#08131d;--panel:#101f2b;--panel2:#142a38;--text:#eef7fb;--muted:#9fb4c1;--accent:#35a7d7;--good:#49c987;--bad:#ff6b6b;--line:#294252;--sea:#176e96;--sea2:#43a8c8;--hull:#b54b3e}
+*{box-sizing:border-box} body{margin:0;background:linear-gradient(#07111a,#0b1b26);color:var(--text);font:15px system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+button,input,select,textarea{font:inherit} button{cursor:pointer}
+header{padding:16px 18px;border-bottom:1px solid var(--line);background:#0a1822;position:sticky;top:0;z-index:5}
+header h1{font-size:20px;margin:0} header p{margin:3px 0 0;color:var(--muted);font-size:12px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:10px 12px;background:#0b1822;border-bottom:1px solid var(--line)}
+.tabs button{border:1px solid var(--line);background:#102431;color:var(--muted);padding:10px 14px;border-radius:9px;white-space:nowrap}
+.tabs button.active{background:var(--accent);color:#06121a;border-color:transparent;font-weight:700}
+main{max-width:1180px;margin:auto;padding:12px}.page{display:none}.page.active{display:block}
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(280px,.75fr);gap:12px}@media(max-width:780px){.grid{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:13px;margin-bottom:12px}
+.card h2,.card h3{margin:0 0 10px}.small{font-size:12px;color:var(--muted)}
+.row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.row>*{min-width:0}
+label{display:block;color:#cfe0e8;font-size:13px;margin:9px 0 5px}
+input[type=number],input[type=text],select,textarea{width:100%;border:1px solid #365363;border-radius:8px;background:#091821;color:var(--text);padding:10px;min-height:43px}
+input[type=range]{width:100%} textarea{min-height:140px;font-family:ui-monospace,monospace}
+.btn{border:0;border-radius:9px;padding:11px 14px;background:var(--accent);color:#06131b;font-weight:750;min-height:43px}.btn.secondary{background:#213947;color:var(--text);border:1px solid #365363}.btn.danger{background:#69383c;color:#fff}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.kpi div{background:#0b1923;border:1px solid var(--line);border-radius:9px;padding:9px}.kpi b{display:block;font-size:17px}.kpi span{font-size:11px;color:var(--muted)}
+.sceneWrap{position:relative;border-radius:11px;overflow:hidden;background:#a8d3e4;border:1px solid #365363;touch-action:pan-y}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/10}
+.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#173444;color:#cde8f3;font-size:12px}
+.result{padding:10px;border-radius:9px;background:#0a1822;border:1px solid var(--line);min-height:62px}.good{color:var(--good)}.bad{color:var(--bad)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}@media(max-width:480px){.two{grid-template-columns:1fr}}
+.check{display:flex;gap:8px;align-items:center;margin:8px 0}.check input{width:18px;height:18px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid var(--line);text-align:left}th{color:var(--muted)}
+.help p{line-height:1.55}.hidden{display:none!important}
+
+.brandHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.brandHead h1{font-size:32px;letter-spacing:.08em;line-height:1;margin:0}
+.brandSub{font-size:11px!important;text-decoration:underline;text-underline-offset:3px;letter-spacing:.12em;margin:4px 0 5px!important;color:#c5d6de!important}
+.creatorMark{font-weight:800;font-size:12px;letter-spacing:.05em;opacity:.12;user-select:none;-webkit-user-select:none;pointer-events:none;white-space:nowrap;padding-top:4px}
+.sceneWatermark{position:absolute;right:9px;top:9px;font-weight:900;font-size:11px;letter-spacing:.08em;opacity:.055;z-index:2;pointer-events:none;user-select:none;-webkit-user-select:none;color:#fff;text-shadow:0 1px 1px #000}
+@media(max-width:520px){.brandHead h1{font-size:29px}.creatorMark{font-size:10px}.brandHead>div:first-child>p:last-child{max-width:270px}}
+
+/* V5 desktop/widescreen optimization: mobile layout remains unchanged */
+@media (min-width:1100px){
+  main{max-width:1440px;padding:18px 24px}
+  #trainer .grid{grid-template-columns:minmax(720px,1.7fr) minmax(330px,.65fr);gap:18px}
+  #trainer .card{margin-bottom:16px}
+  .sceneWrap{max-height:72vh}
+  #seaCanvas{max-height:72vh;object-fit:contain}
+  .tabs{padding-left:max(18px,calc((100vw - 1440px)/2 + 24px));padding-right:max(18px,calc((100vw - 1440px)/2 + 24px))}
+}
+.guessLocked{background:#24313a!important;color:#8998a1!important;cursor:not-allowed}
+.countdownBox{font-weight:800;font-size:14px;margin:8px 0;color:#ffd86b;min-height:20px}
+</style>
+</head>
+<body>
+<header class="brandHead"><div><h1>DST</h1><p class="brandSub">(draftsight trainer)</p><p>Offline visual ship-draught reading practice • seeded irregular sea simulation</p></div><div class="creatorMark" aria-label="Creator attribution">L.C. Manreal</div></header>
+<nav class="tabs">
+<button data-tab="trainer" class="active">Trainer</button>
+<button data-tab="settings">Settings</button>
+<button data-tab="designer">Mark Designer</button>
+<button data-tab="results">Results</button>
+<button data-tab="guide">Guide</button>
+</nav>
+<main>
+<section id="trainer" class="page active">
+<div class="grid">
+<div>
+ <div class="card">
+  <div class="row" style="justify-content:space-between"><div><b id="scenarioLabel">Scenario</b><div class="small" id="conditionLabel"></div></div><span class="badge" id="markBadge">Metric</span></div>
+  <div class="sceneWrap"><div class="sceneWatermark">L.C. MANREAL • DST</div><canvas id="seaCanvas" width="960" height="600" aria-label="Animated vessel draft marks with moving sea"></canvas></div>
+  <div class="row" style="margin-top:10px">
+   <button class="btn secondary" id="pauseBtn">Pause</button><button class="btn secondary" id="newBtn">New scenario</button>
+   <span class="small">Observe several cycles. The hidden true draught does not change during the round.</span>
+  </div>
+ </div>
+</div>
+<div>
+ <div class="card">
+  <h3>Your reading</h3>
+  <label id="guessLabel">Estimated draught (m)</label>
+  <div id="readyCountdown" class="countdownBox"></div>
+  <input id="guess" type="number" inputmode="decimal" step="0.01" placeholder="e.g. 6.43">
+  <button class="btn" id="submitBtn" style="width:100%;margin-top:10px">Commit reading</button>
+  <div id="feedback" class="result" style="margin-top:10px">No answer submitted yet.</div>
+ </div>
+ <div class="card"><h3>Round</h3><div class="kpi"><div><b id="roundNo">1</b><span>ROUND</span></div><div><b id="score">0</b><span>SCORE</span></div><div><b id="streak">0</b><span>STREAK</span></div></div></div>
+ <div class="card"><h3>Observation controls</h3>
+  <div class="check"><input id="freezeAllowed" type="checkbox"><label for="freezeAllowed" style="margin:0">Allow pause while judging</label></div>
+  <div class="small">Disable this for stricter practice. Settings determine tolerance and sea behavior.</div>
+ </div>
+</div>
+</div>
+</section>
+
+<section id="settings" class="page">
+<div class="card"><h2>Training settings</h2>
+<div class="two">
+<div><label>Player name</label><input id="playerName" type="text" maxlength="60" placeholder="Enter player name"></div>
+<div><label>Viewing distance</label><select id="viewDistance"><option value="near">Near</option><option value="normal" selected>Normal</option><option value="far">Far</option><option value="veryfar">Very far</option></select></div>
+<div><label>Marking preset</label><select id="preset"><option value="metric">Metric Arabic — 10 cm characters</option><option value="imperial">Imperial Arabic — 6 in characters</option><option value="roman">Imperial Roman</option><option value="custom">Custom vessel</option></select></div>
+<div><label>Difficulty</label><select id="difficulty"><option value="easy">Easy</option><option value="normal" selected>Normal</option><option value="hard">Hard</option><option value="expert">Expert</option></select></div>
+<div><label>Draft-mark paint condition</label><select id="paintMode"><option value="difficulty" selected>Automatic — follows difficulty</option><option value="clean">Clean / fully visible</option><option value="light">Lightly worn</option><option value="worn">Worn / partly missing</option><option value="severe">Severely peeled</option></select></div>
+<div><label>Tolerance (cm)</label><input id="tolerance" type="number" min="0.5" max="30" step="0.5" value="3"></div>
+<div><label>Observation countdown before answer unlocks (seconds)</label><input id="readyDelay" type="number" min="0" max="120" step="1" value="10"></div>
+<div><label>Auto-next delay after committed reading (seconds)</label><input id="autoNextDelay" type="number" min="0" max="120" step="1" value="10"></div>
+<div><label>Maximum reading time before score penalty (seconds)</label><input id="maxReadTime" type="number" min="1" max="600" step="1" value="30"></div>
+<div><label>True draught minimum (m)</label><input id="draftMin" type="number" min="0.5" max="25" step=".1" value="5.5"></div>
+<div><label>True draught maximum (m)</label><input id="draftMax" type="number" min="0.6" max="30" step=".1" value="9.5"></div>
+<div><label>Sea state</label><select id="seaState"><option value="calm">Calm</option><option value="moderate" selected>Moderate</option><option value="rough">Rough</option><option value="veryrough">Very rough</option></select></div>
+<div><label>Swell strength</label><input id="swell" type="range" min="0" max="100" value="48"></div>
+<div><label>Chop / short-wave noise</label><input id="chop" type="range" min="0" max="100" value="42"></div>
+<div><label>Sudden crest/trough events</label><input id="spikes" type="range" min="0" max="100" value="38"></div>
+<div><label>Vessel heave</label><input id="heave" type="range" min="0" max="100" value="30"></div>
+</div>
+<div class="check"><input id="roll" type="checkbox" checked><label for="roll" style="margin:0">Subtle vessel roll / changing local water intersection</label></div>
+<div class="check"><input id="foam" type="checkbox" checked><label for="foam" style="margin:0">Wave crest/foam visual noise</label></div>
+<div class="check"><input id="showSeed" type="checkbox" checked><label for="showSeed" style="margin:0">Show reproducible scenario seed</label></div>
+<button id="applySettings" class="btn">Apply & start new scenario</button>
+</div>
+</section>
+
+<section id="designer" class="page">
+<div class="grid"><div>
+<div class="card"><h2>Custom draft marking</h2>
+<p class="small">For an unusual vessel, define the visible labels line by line. Each row is <b>value,label</b>. Value is the draught in metres represented by the <b>bottom edge</b> of that character/mark. Left, Right and Alternate alignment are now honored exactly.</p>
+<label>Custom rows</label><textarea id="customRows">6.0,6M
+6.2,2
+6.4,4
+6.6,6
+6.8,8
+7.0,7M
+7.2,2
+7.4,4
+7.6,6
+7.8,8
+8.0,8M</textarea>
+<div class="two"><div><label>Character/mark height (cm)</label><input id="customHeight" type="number" value="10" min="1" max="100"></div><div><label>Horizontal offset pattern</label><select id="customAlign"><option value="alternate">Alternate left/right</option><option value="left">Left aligned</option><option value="right">Right aligned</option></select></div></div>
+<button class="btn" id="useCustom">Use custom marking</button>
+<div id="customMsg" class="small" style="margin-top:8px"></div>
+</div></div>
+<div><div class="card"><h3>Purpose</h3><p class="small">This lets you recreate a non-standard or unfamiliar scale without changing the simulation engine. Enter the actual numerical reference of each visible mark, then practice against it.</p><p class="small">The trainer intentionally treats this as visual practice, not as an official vessel measurement or survey instrument.</p></div></div>
+</div>
+</section>
+
+<section id="results" class="page"><div class="card"><div class="row" style="justify-content:space-between"><h2>Practice history</h2><div class="row"><button id="printResults" class="btn secondary">Print results</button><button id="exportExcel" class="btn secondary">Export Excel</button><button id="clearHistory" class="btn danger">Clear</button></div></div><div style="overflow:auto"><table><thead><tr><th>#</th><th>Player</th><th>Timestamp</th><th>Decision time</th><th>True</th><th>Your read</th><th>Error</th><th>Sea</th><th>Distance</th><th>Result</th></tr></thead><tbody id="historyBody"></tbody></table></div></div></section>
+
+<section id="guide" class="page"><div class="card help"><h2>How to use the trainer</h2>
+<p>Watch the water intersection against the draught marks for several wave cycles. Do not chase a single crest or trough. Estimate the underlying mean level, enter your reading, and commit it.</p>
+<p><b>Difficulty and peeled paint:</b> Easy keeps the draft marks clean. Normal introduces light wear, Hard removes more paint, and Expert can heavily obscure parts of the scale. You can override this behavior in Settings.</p><p><b>Metric preset:</b> each numeral is calibrated to 10 cm physical height and displayed mark bottoms are 20 cm apart. The lower edge/reference line is the stated even-decimetre draught; the top edge is +10 cm. Example: bottom of the 8 mark = x.80 m, top = x.90 m, and the bottom of the next whole-metre mark = (x+1).00 m.</p>
+<p><b>Imperial presets:</b> use six-inch character increments/gaps for visual practice. The Roman option changes the presentation style. Custom mode can reproduce an unfamiliar scale you encounter.</p>
+<p><b>Round timing:</b> A new scenario begins with a configurable observation countdown (10 s default). The answer field stays locked until GO. Decision time starts at GO. The default late-score threshold is 30 s. After committing, the result remains visible for the configured auto-next delay (10 s default), then a new scenario begins. On a keyboard, Enter commits and Space starts a new scenario.</p><p><b>Viewing distance:</b> Near, Normal, Far and Very Far reduce or enlarge the apparent ship/mark scale while keeping the simulated draught geometry unchanged. This is a visual-acuity training aid, not a calibrated real-world distance measurement.</p><p><b>Sea model:</b> the display combines long swell, multiple short waves, seeded pseudo-random noise, grouped waves, transient high crests and deep troughs, and optional vessel heave/roll. It is intentionally an educational visual model rather than a hydrodynamic prediction.</p>
+<p><b>Important:</b> use actual approved vessel markings, survey procedures and professional judgment for real draft surveys. This game is for eye-training only.</p>
+</div></section>
+</main>
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const C=$('#seaCanvas'),ctx=C.getContext('2d');
+const S={preset:'metric',difficulty:'normal',tol:3,min:5.5,max:9.5,sea:'moderate',swell:48,chop:42,spikes:38,heave:30,roll:true,foam:true,showSeed:true,paintMode:'difficulty',playerName:'',distance:'normal',readyDelay:10,autoNextDelay:10,maxReadTime:30};
+let state={seed:0,trueDraft:7.0,paused:false,t0:performance.now(),holdT:0,round:1,score:0,streak:0,answered:false,history:[],custom:[],roundStarted:performance.now(),answerStart:0,readyUntil:0,autoNextAt:0,autoNextTimer:null};
+function hash(x){x=Math.imul(x^x>>>16,0x45d9f3b);x=Math.imul(x^x>>>16,0x45d9f3b);return ((x^x>>>16)>>>0)/4294967296}
+function noise1(x,seed){let i=Math.floor(x),f=x-i;f=f*f*(3-2*f);return (hash(i+seed)*2-1)*(1-f)+(hash(i+1+seed)*2-1)*f}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function tab(id){$$('.page').forEach(x=>x.classList.toggle('active',x.id===id));$$('.tabs button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id))}
+$$('.tabs button').forEach(b=>b.addEventListener('click',()=>tab(b.dataset.tab)));
+function readSettings(){
+ S.playerName=$('#playerName').value.trim()||'Anonymous';S.distance=$('#viewDistance').value;S.preset=$('#preset').value;S.difficulty=$('#difficulty').value;S.paintMode=$('#paintMode').value;S.tol=clamp(+$('#tolerance').value||3,.5,30);S.readyDelay=clamp(+$('#readyDelay').value||0,0,120);S.autoNextDelay=clamp(+$('#autoNextDelay').value||0,0,120);S.maxReadTime=clamp(+$('#maxReadTime').value||30,1,600);
+ S.min=clamp(+$('#draftMin').value||5.5,.5,25);S.max=clamp(+$('#draftMax').value||9.5,S.min+.1,30);
+ S.sea=$('#seaState').value;S.swell=+$('#swell').value;S.chop=+$('#chop').value;S.spikes=+$('#spikes').value;S.heave=+$('#heave').value;
+ S.roll=$('#roll').checked;S.foam=$('#foam').checked;S.showSeed=$('#showSeed').checked;
+}
+function seaFactor(){return {calm:.45,moderate:1,rough:1.65,veryrough:2.25}[S.sea]||1}
+
+const SETTINGS_KEY='dst_v5_settings';
+function saveSettings(){
+ const ids=['playerName','viewDistance','preset','difficulty','paintMode','tolerance','readyDelay','autoNextDelay','maxReadTime','draftMin','draftMax','seaState','swell','chop','spikes','heave','roll','foam','showSeed','freezeAllowed','customRows','customHeight','customAlign'];
+ const data={};
+ ids.forEach(id=>{const el=$('#'+id);if(el)data[id]=(el.type==='checkbox'?el.checked:el.value)});
+ try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(data))}catch(e){}
+}
+function loadSettings(){
+ try{
+  const data=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}');
+  Object.keys(data).forEach(id=>{const el=$('#'+id);if(!el)return;if(el.type==='checkbox')el.checked=!!data[id];else el.value=data[id]});
+ }catch(e){}
+}
+function setGuessLocked(locked){
+ const g=$('#guess'),b=$('#submitBtn');
+ g.disabled=locked; b.disabled=locked;
+ g.classList.toggle('guessLocked',locked);
+ b.style.opacity=locked?'.55':'1';
+}
+function updateReadyUI(now=performance.now()){
+ if(state.answered)return;
+ const remain=Math.max(0,(state.readyUntil-now)/1000);
+ if(remain>0){
+   setGuessLocked(true);
+   $('#readyCountdown').textContent='READY — observe the marks • '+Math.ceil(remain)+' s';
+ }else{
+   if(!state.answerStart) state.answerStart=state.readyUntil||now;
+   setGuessLocked(false);
+   $('#readyCountdown').textContent='GO — enter your reading';
+ }
+}
+function cancelAutoNext(){if(state.autoNextTimer){clearInterval(state.autoNextTimer);state.autoNextTimer=null}state.autoNextAt=0}
+function startAutoNext(){
+ cancelAutoNext();
+ const sec=S.autoNextDelay;
+ if(sec<=0){state.round++;newScenario();return}
+ state.autoNextAt=performance.now()+sec*1000;
+ const tick=()=>{
+   const r=Math.max(0,(state.autoNextAt-performance.now())/1000);
+   $('#readyCountdown').textContent='Next scenario in '+Math.ceil(r)+' s';
+   if(r<=0){cancelAutoNext();state.round++;newScenario()}
+ };
+ tick();state.autoNextTimer=setInterval(tick,200);
+}
+function newScenario(){
+ readSettings(); state.seed=Math.floor(Math.random()*900000)+100000;
+ let r=hash(state.seed+91); state.trueDraft=Math.round((S.min+r*(S.max-S.min))*100)/100;
+ cancelAutoNext();state.answered=false;state.paused=false;state.t0=performance.now();state.roundStarted=performance.now();state.answerStart=0;state.readyUntil=state.roundStarted+S.readyDelay*1000;state.holdT=0;setGuessLocked(S.readyDelay>0);updateReadyUI(state.roundStarted);$('#pauseBtn').textContent='Pause';$('#guess').value='';$('#feedback').className='result';$('#feedback').textContent='Observe several cycles before committing your reading.';
+ $('#roundNo').textContent=state.round;$('#score').textContent=state.score;$('#streak').textContent=state.streak;
+ $('#scenarioLabel').textContent=S.showSeed?'Scenario #'+state.seed:'Training scenario';
+ $('#conditionLabel').textContent=S.sea.replace('veryrough','Very rough')+' sea • '+S.difficulty+' difficulty';
+ $('#markBadge').textContent={metric:'Metric',imperial:'Imperial Arabic',roman:'Imperial Roman',custom:'Custom'}[S.preset];
+ let imp=S.preset==='imperial'||S.preset==='roman';$('#guessLabel').textContent=imp?'Estimated draught (m — enter metric answer)':'Estimated draught (m)'; 
+}
+function yFromDraft(d,heave=0){const span=2.3, center=state.trueDraft;return C.height*.53-(d-center)*C.height/span+heave}
+function roman(n){const map=[[10,'X'],[9,'IX'],[8,'VIII'],[7,'VII'],[6,'VI'],[5,'V'],[4,'IV'],[3,'III'],[2,'II'],[1,'I']];let s='';for(const [v,c] of map)while(n>=v){s+=c;n-=v}return s}
+function paintLoss(){
+ const mode=S.paintMode==='difficulty'?({easy:'clean',normal:'light',hard:'worn',expert:'severe'}[S.difficulty]||'light'):S.paintMode;
+ return {clean:0,light:.10,worn:.28,severe:.48}[mode]||0;
+}
+function marks(heave,tilt){
+ ctx.save();ctx.translate(0,heave);ctx.rotate(tilt);
+ const distScale={near:1.16,normal:1,far:.78,veryfar:.60}[S.distance]||1;
+ ctx.translate(C.width*.5, C.height*.50);ctx.scale(distScale,distScale);ctx.translate(-C.width*.5,-C.height*.50);
+ const x=360, scale=C.height/2.3;
+ function markAt(value,label,side,heightM,index){
+   const y=yFromDraft(value,0), h=heightM*scale;
+   // Every line is the exact lower/reference edge of its numeral.
+   // Metric: numeral = 0.10 m high; bottom-to-bottom interval = 0.20 m.
+   // Therefore clear vertical space between adjacent numerals = exactly 0.10 m,
+   // the same physical height as the numeral.
+   ctx.save();
+   ctx.strokeStyle='rgba(245,245,230,.92)';
+   ctx.lineWidth=Math.max(2,h*.045);
+   ctx.beginPath();
+   if(side==='left'){ctx.moveTo(x-150,y);ctx.lineTo(x-14,y)}
+   else{ctx.moveTo(x+14,y);ctx.lineTo(x+150,y)}
+   ctx.stroke();ctx.restore();
+   drawGlyph(label,x+(side==='left'?-24:24),y,h,side==='left'?'right':'left',index);
+ }
+ if(S.preset==='custom'&&state.custom.length){
+   const cm=clamp(+$('#customHeight').value||10,1,100)/100;
+   const align=$('#customAlign').value;
+   state.custom.forEach((m,i)=>{
+     const side=align==='left'?'left':align==='right'?'right':(i%2?'right':'left');
+     markAt(m.v,m.label,side,cm,i);
+   });
+ }else if(S.preset==='metric'){
+   // STANDARD METRIC GEOMETRY:
+   // (8M) 2 4 6 8 (9M)
+   // bottoms: .00 .20 .40 .60 .80 1.00
+   // each painted numeral occupies exactly .10 m vertically;
+   // each clear gap occupies exactly .10 m vertically.
+   const start=Math.floor((state.trueDraft-1.25)*5)/5, end=state.trueDraft+1.45;
+   let i=0;
+   for(let d=start;d<=end+.0001;d+=.2,i++){
+     const val=Math.round(d*10)/10;
+     const tenth=((Math.round(val*10)%10)+10)%10;
+     const label=tenth===0?Math.round(val)+'M':String(tenth);
+     // Keep a consistent single-side scale, like a real vertical draft column.
+     markAt(val,label,'left',.10,i);
+   }
+ }else{
+   const ft=state.trueDraft*3.28084, base=Math.floor(ft-4), top=Math.ceil(ft+4);
+   let i=0;
+   for(let f=base;f<=top;f+=1,i++){
+     const m=f/3.28084,label=S.preset==='roman'?roman(Math.max(1,f)):String(f);
+     markAt(m,label,'left',6*.0254,i);
+   }
+ }
+ ctx.restore();
+}
+function drawGlyph(txt,x,bottomY,targetH,align,index){
+ // Calibrate the VISIBLE ink box, not CSS/canvas font-size.
+ ctx.save();
+ const baseFont=100;
+ ctx.font='900 '+baseFont+'px Arial Black,Arial,sans-serif';
+ const m=ctx.measureText(txt);
+ const asc=m.actualBoundingBoxAscent||72, desc=m.actualBoundingBoxDescent||2;
+ const inkH=Math.max(1,asc+desc), sy=targetH/inkH;
+ ctx.translate(x,bottomY);ctx.scale(1,sy);
+ ctx.font='900 '+baseFont+'px Arial Black,Arial,sans-serif';
+ ctx.textAlign=align;ctx.textBaseline='alphabetic';ctx.lineJoin='round';
+ const loss=paintLoss();
+ // Deterministic peeled-paint simulation. Easy/clean keeps the entire mark.
+ if(loss<=0){
+   ctx.lineWidth=3/sy;ctx.strokeStyle='#17212a';ctx.fillStyle='#f2efe6';
+   ctx.strokeText(txt,0,-desc);ctx.fillText(txt,0,-desc);
+ }else{
+   // Draw the full mark faintly beneath only enough to keep anti-aliased edges natural,
+   // then overlay deterministic opaque "paint islands" clipped to the glyph.
+   ctx.globalAlpha=Math.max(.10,.32-loss*.45);
+   ctx.lineWidth=3/sy;ctx.strokeStyle='#17212a';ctx.fillStyle='#f2efe6';
+   ctx.strokeText(txt,0,-desc);ctx.fillText(txt,0,-desc);
+   ctx.globalAlpha=1;
+   // Several narrow slices are omitted according to seed/difficulty, simulating peeled paint.
+   const width=Math.max(24,m.width+8), left=align==='right'?-width:0;
+   const slices=9;
+   for(let s=0;s<slices;s++){
+     const keep=hash(state.seed+(index||0)*97+s*131) > loss;
+     if(!keep) continue;
+     ctx.save();
+     ctx.beginPath();
+     ctx.rect(left+s*width/slices,-asc-desc,width/slices+1,inkH+4);
+     ctx.clip();
+     ctx.lineWidth=3/sy;ctx.strokeStyle='#17212a';ctx.fillStyle='#f2efe6';
+     ctx.strokeText(txt,0,-desc);ctx.fillText(txt,0,-desc);
+     ctx.restore();
+   }
+ }
+ ctx.restore();
+}
+function eventPulse(t){
+ let sum=0, strength=S.spikes/100*seaFactor();
+ for(let k=-1;k<=2;k++){let center=(Math.floor(t/7)+k)*7+1.2+hash(state.seed+k*71)*4.4;let dt=t-center;if(Math.abs(dt)<1.1){let sign=hash(state.seed+k*101+3)>.48?1:-1;sum+=sign*Math.exp(-dt*dt*5)*strength}}
+ return sum;
+}
+function waterY(x,t){
+ const sf=seaFactor(), sw=S.swell/100, ch=S.chop/100;
+ let base=C.height*.53;
+ let long=Math.sin(t*.72+x*.008+state.seed*.001)*18*sw*sf;
+ let w2=Math.sin(t*1.71-x*.026+1.4)*9*ch*sf;
+ let w3=Math.sin(t*2.83+x*.049)*5*ch*sf;
+ let rnd=noise1(t*2+x*.018,state.seed)*8*ch*sf;
+ let group=.55+.45*Math.sin(t*.22+state.seed);
+ let spike=eventPulse(t)*28;
+ return base+(long+w2+w3+rnd)*(.7+.3*group)+spike;
+}
+function draw(now){
+ let t=state.paused?state.holdT:(now-state.t0)/1000;
+ const sf=seaFactor(), heave=Math.sin(t*.58+1.2)*(S.heave/100)*10*sf+noise1(t*.4,state.seed+700)*(S.heave/100)*4;
+ const tilt=S.roll?Math.sin(t*.37+2)*.008*sf:0;
+ ctx.clearRect(0,0,C.width,C.height);
+ let sky=ctx.createLinearGradient(0,0,0,C.height);sky.addColorStop(0,'#b8deeb');sky.addColorStop(1,'#7cb6ca');ctx.fillStyle=sky;ctx.fillRect(0,0,C.width,C.height);
+ ctx.save();
+ const ds={near:1.16,normal:1,far:.78,veryfar:.60}[S.distance]||1;
+ ctx.translate(C.width*.5,C.height*.50);ctx.scale(ds,ds);ctx.translate(-C.width*.5,-C.height*.50);
+ ctx.translate(C.width*.04,0);ctx.fillStyle='#a43f35';ctx.strokeStyle='#542c2b';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(90,-20);ctx.lineTo(660,-20);ctx.lineTo(620,C.height+40);ctx.lineTo(125,C.height+40);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+ marks(heave,tilt);
+ let pts=[];for(let x=0;x<=C.width;x+=8)pts.push([x,waterY(x,t)]);
+ ctx.beginPath();ctx.moveTo(0,C.height);ctx.lineTo(pts[0][0],pts[0][1]);for(const p of pts)ctx.lineTo(p[0],p[1]);ctx.lineTo(C.width,C.height);ctx.closePath();
+ let sea=ctx.createLinearGradient(0,C.height*.35,0,C.height);sea.addColorStop(0,'rgba(45,155,193,.82)');sea.addColorStop(1,'rgba(4,74,112,.96)');ctx.fillStyle=sea;ctx.fill();
+ ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(...p):ctx.moveTo(...p));ctx.strokeStyle='rgba(224,248,255,.8)';ctx.lineWidth=4;ctx.stroke();
+ if(S.foam){ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=2;for(let i=0;i<pts.length;i+=8){if(hash(i+Math.floor(t*3)+state.seed)>.7){ctx.beginPath();ctx.moveTo(pts[i][0],pts[i][1]+5);ctx.lineTo(pts[Math.min(i+3,pts.length-1)][0],pts[Math.min(i+3,pts.length-1)][1]+5);ctx.stroke()}}}
+ if(state.answered){let y=C.height*.53;ctx.setLineDash([12,9]);ctx.strokeStyle='#ffd86b';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(70,y);ctx.lineTo(C.width-70,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#1c2830';ctx.font='bold 18px system-ui';ctx.fillText('TRUE MEAN '+state.trueDraft.toFixed(2)+' m',C.width-265,y-10)}
+ requestAnimationFrame(draw)
+}
+$('#submitBtn').addEventListener('click',()=>{
+ if(state.answered)return;let g=+$('#guess').value;if(!Number.isFinite(g)||g<.1||g>40){$('#feedback').textContent='Enter a valid draught in metres.';return}
+ state.answered=true;let err=Math.abs(g-state.trueDraft),ok=err*100<=S.tol;
+ const decisionSec=Math.max(0,(performance.now()-(state.answerStart||state.readyUntil||performance.now()))/1000);
+ const accuracyBase=ok?Math.max(10,Math.round(100-err*100*5)):0;
+ // Full accuracy score up to maxReadTime. Beyond it, subtract 2 points per extra second.
+ const timePenalty=decisionSec>S.maxReadTime?Math.ceil((decisionSec-S.maxReadTime)*2):0;
+ const roundPoints=accuracyBase-timePenalty;
+ state.score+=roundPoints;
+ if(ok)state.streak++;else state.streak=0;
+ $('#feedback').className='result '+(ok?'good':'bad');$('#feedback').innerHTML=(ok?'<b>Within tolerance.</b>':'<b>Outside tolerance.</b>')+'<br>True: '+state.trueDraft.toFixed(2)+' m • Yours: '+g.toFixed(2)+' m • Error: '+(err*100).toFixed(1)+' cm • Allowed: ±'+S.tol+' cm<br>Decision: '+decisionSec.toFixed(1)+' s • Round score: '+(roundPoints>=0?'+':'')+roundPoints+(timePenalty?' • Late penalty: -'+timePenalty:'');
+ const stamp=new Date();
+ state.history.unshift({r:state.round,player:S.playerName||'Anonymous',stamp:stamp.toISOString(),decision:decisionSec,t:state.trueDraft,g,e:err,sea:S.sea,distance:S.distance,ok});renderHistory();$('#score').textContent=state.score;$('#streak').textContent=state.streak;startAutoNext();
+});
+$('#newBtn').addEventListener('click',()=>{state.round++;newScenario()});
+$('#pauseBtn').addEventListener('click',()=>{if(!$('#freezeAllowed').checked&&!state.answered){$('#feedback').textContent='Pause is disabled for this training round.';return}state.paused=!state.paused;if(state.paused)state.holdT=(performance.now()-state.t0)/1000;else state.t0=performance.now()-state.holdT*1000;$('#pauseBtn').textContent=state.paused?'Resume':'Pause'});
+$('#applySettings').addEventListener('click',()=>{saveSettings();state.round++;newScenario();tab('trainer')});
+function parseCustom(){
+ let rows=[];for(const line of $('#customRows').value.split(/\n/)){if(!line.trim())continue;let [v,...lab]=line.split(','),n=+v;if(Number.isFinite(n)&&lab.join(',').trim())rows.push({v:n,label:lab.join(',').trim()})}
+ rows.sort((a,b)=>a.v-b.v);return rows;
+}
+$('#useCustom').addEventListener('click',()=>{state.custom=parseCustom();if(state.custom.length<2){$('#customMsg').textContent='Add at least two valid value,label rows.';return}$('#preset').value='custom';S.preset='custom';$('#customMsg').textContent='Custom scale loaded: '+state.custom.length+' marks • '+$('#customAlign').value+' alignment.';state.round++;newScenario();tab('trainer')});
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmtStamp(iso){try{return new Date(iso).toLocaleString()}catch(e){return iso||''}}
+function renderHistory(){
+ let b=$('#historyBody');
+ b.innerHTML=state.history.map(h=>`<tr><td>${h.r}</td><td>${esc(h.player||'Anonymous')}</td><td>${esc(fmtStamp(h.stamp))}</td><td>${(h.decision||0).toFixed(1)} s</td><td>${h.t.toFixed(2)} m</td><td>${h.g.toFixed(2)} m</td><td>${(h.e*100).toFixed(1)} cm</td><td>${esc(h.sea)}</td><td>${esc(h.distance||'normal')}</td><td class="${h.ok?'good':'bad'}">${h.ok?'PASS':'MISS'}</td></tr>`).join('')||'<tr><td colspan="10" class="small">No completed rounds yet.</td></tr>'
+}
+$('#clearHistory').addEventListener('click',()=>{state.history=[];renderHistory()});
+function xmlEsc(v){return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+$('#exportExcel').addEventListener('click',()=>{
+ if(!state.history.length){alert('No completed results to export.');return}
+ const headers=['Round','Player','Timestamp','Decision time (s)','True draft (m)','Player reading (m)','Error (cm)','Sea','Distance','Result','Scenario tolerance (cm)'];
+ const rows=state.history.map(h=>[h.r,h.player||'Anonymous',h.stamp||'',(h.decision||0).toFixed(1),h.t.toFixed(2),h.g.toFixed(2),(h.e*100).toFixed(1),h.sea,h.distance||'normal',h.ok?'PASS':'MISS',S.tol]);
+ const cell=v=>`<Cell><Data ss:Type="${!isNaN(v)&&v!==''?'Number':'String'}">${xmlEsc(v)}</Data></Cell>`;
+ const xml=`<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="DST Results"><Table><Row>${headers.map(cell).join('')}</Row>${rows.map(r=>'<Row>'+r.map(cell).join('')+'</Row>').join('')}</Table></Worksheet></Workbook>`;
+ downloadBlob(new Blob([xml],{type:'application/vnd.ms-excel'}),'DST_Results_'+new Date().toISOString().slice(0,10)+'.xls');
+});
+$('#printResults').addEventListener('click',()=>{
+ if(!state.history.length){alert('No completed results to print.');return}
+ const rows=state.history.map(h=>`<tr><td>${h.r}</td><td>${esc(h.player||'Anonymous')}</td><td>${esc(fmtStamp(h.stamp))}</td><td>${(h.decision||0).toFixed(1)} s</td><td>${h.t.toFixed(2)}</td><td>${h.g.toFixed(2)}</td><td>${(h.e*100).toFixed(1)}</td><td>${esc(h.sea)}</td><td>${esc(h.distance||'normal')}</td><td>${h.ok?'PASS':'MISS'}</td></tr>`).join('');
+ const w=window.open('','_blank');if(!w){alert('Allow pop-ups to print results.');return}
+ w.document.write(`<!doctype html><title>DST Results</title><style>body{font:12px Arial;margin:24px}h1{margin:0}small{color:#555}table{border-collapse:collapse;width:100%;margin-top:18px}th,td{border:1px solid #888;padding:6px;text-align:left}@media print{button{display:none}}
+/* V5 desktop/widescreen optimization: mobile layout remains unchanged */
+@media (min-width:1100px){
+  main{max-width:1440px;padding:18px 24px}
+  #trainer .grid{grid-template-columns:minmax(720px,1.7fr) minmax(330px,.65fr);gap:18px}
+  #trainer .card{margin-bottom:16px}
+  .sceneWrap{max-height:72vh}
+  #seaCanvas{max-height:72vh;object-fit:contain}
+  .tabs{padding-left:max(18px,calc((100vw - 1440px)/2 + 24px));padding-right:max(18px,calc((100vw - 1440px)/2 + 24px))}
+}
+.guessLocked{background:#24313a!important;color:#8998a1!important;cursor:not-allowed}
+.countdownBox{font-weight:800;font-size:14px;margin:8px 0;color:#ffd86b;min-height:20px}
+</style><h1>DST</h1><small>(draftsight trainer) • Training Results • L.C. Manreal</small><table><thead><tr><th>#</th><th>Player</th><th>Timestamp</th><th>Time</th><th>True m</th><th>Read m</th><th>Error cm</th><th>Sea</th><th>Distance</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table><p>Educational visual-training record; not an official draft-survey document.</p><button onclick="print()">Print</button>`);
+ w.document.close();
+});
+
+document.addEventListener('keydown',e=>{
+ const tag=(document.activeElement&&document.activeElement.tagName||'').toLowerCase();
+ const typing=tag==='textarea'||tag==='select'||(tag==='input'&&document.activeElement.id!=='guess');
+ if(e.key==='Enter'&&!typing){
+   e.preventDefault();
+   if(!state.answered&&!$('#submitBtn').disabled)$('#submitBtn').click();
+ }else if(e.code==='Space'&&!typing){
+   e.preventDefault();state.round++;newScenario();
+ }
+});
+window.addEventListener('resize',()=>{});
+loadSettings();
+try{if(!$('#playerName').value)$('#playerName').value=localStorage.getItem('dstPlayerName')||''}catch(e){}
+$$('#settings input,#settings select,#designer input,#designer select,#designer textarea').forEach(el=>el.addEventListener('change',saveSettings));
+readSettings();state.custom=parseCustom();newScenario();renderHistory();
+setInterval(()=>updateReadyUI(),100);
+requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>

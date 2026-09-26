@@ -32,3 +32,11 @@ Do not connect mains voltage directly to the ESP8266. Use appropriately rated, i
 ## Provenance
 
 Recovered from the BlazingSystems ChatGPT project archive and reconciled against the available project history before publication.
+
+## Recovery repair and hardening
+
+During the migration audit, the first GitHub copy was found to be truncated at the start of `setup()`. It was replaced from the complete recovered Library artifact; the maintained source now contains the full `setup()` and `loop()` implementation.
+
+The untouched complete recovered source is preserved in BlazingSystems-Archives. The maintained Projects copy replaces the universal `thermostat` AP password with a per-device `BlazeTherm-<chip-id>` default. Change that default for real deployments.
+
+A target ESP8266 compile/hardware test is still required; this environment does not have Arduino CLI/PlatformIO installed.

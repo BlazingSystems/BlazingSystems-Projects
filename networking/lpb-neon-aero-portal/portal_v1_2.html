@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>{{ title }}</title>
+<style>
+:root{
+  --bg:#060914;--glass:rgba(18,25,48,.62);--glass2:rgba(255,255,255,.075);
+  --line:rgba(166,225,255,.22);--cyan:#67e8ff;--blue:#6b8cff;--violet:#b579ff;
+  --green:#66ffc2;--text:#f4f8ff;--muted:#9ba9c7;--danger:#ff6e91;
+  --shadow:0 24px 70px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:var(--text);background:var(--bg)}
+body{
+ min-height:100vh;min-height:100dvh;overflow-x:hidden;
+ background:
+ radial-gradient(circle at 12% 10%,rgba(67,217,255,.20),transparent 30%),
+ radial-gradient(circle at 88% 18%,rgba(181,121,255,.19),transparent 31%),
+ radial-gradient(circle at 50% 92%,rgba(80,115,255,.18),transparent 34%),
+ linear-gradient(145deg,#050711,#0a1024 48%,#070914);
+}
+body:before,body:after{content:"";position:fixed;border-radius:50%;filter:blur(12px);pointer-events:none;opacity:.75}
+body:before{width:220px;height:220px;right:-90px;top:20%;background:rgba(92,229,255,.11)}
+body:after{width:260px;height:260px;left:-130px;bottom:5%;background:rgba(181,121,255,.11)}
+.shell{width:min(94%,440px);margin:auto;padding:calc(22px + env(safe-area-inset-top)) 0 calc(28px + env(safe-area-inset-bottom))}
+.brand{text-align:center;margin:5px 0 18px}
+.logo-orb{width:66px;height:66px;margin:auto;border-radius:22px;display:grid;place-items:center;
+ background:linear-gradient(145deg,rgba(103,232,255,.30),rgba(181,121,255,.23));
+ border:1px solid rgba(195,240,255,.38);box-shadow:0 0 28px rgba(103,232,255,.18),inset 0 1px 1px rgba(255,255,255,.35)}
+.logo-orb span{font-size:25px;font-weight:900;letter-spacing:-2px;text-shadow:0 0 15px var(--cyan)}
+.brand h1{font-size:21px;margin:11px 0 3px;letter-spacing:.12em;text-transform:uppercase}
+.brand p{margin:0;color:var(--muted);font-size:12px;letter-spacing:.08em}
+.glass{background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(255,255,255,.035));border:1px solid var(--line);
+ box-shadow:var(--shadow);backdrop-filter:blur(22px) saturate(145%);-webkit-backdrop-filter:blur(22px) saturate(145%);border-radius:30px}
+.hero{padding:22px;margin-bottom:14px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;width:170px;height:80px;left:25%;top:-65px;background:var(--cyan);filter:blur(50px);opacity:.16}
+.status{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;background:rgba(102,255,194,.09);border:1px solid rgba(102,255,194,.23);font-size:11px;color:var(--green);font-weight:800;letter-spacing:.07em}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+.device{font-size:11px;color:var(--muted);text-align:right;line-height:1.55}
+.time-label{text-align:center;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.16em;margin-top:24px}
+.time{text-align:center;font-size:31px;font-weight:800;letter-spacing:-.04em;margin:5px 0 22px;text-shadow:0 0 24px rgba(103,232,255,.14)}
+.btn{border:0;min-height:52px;border-radius:17px;padding:0 16px;font:inherit;font-weight:800;cursor:pointer;color:var(--text);
+ transition:transform .12s ease,filter .15s ease;letter-spacing:.02em}
+.btn:active{transform:scale(.975)}
+.btn-primary{width:100%;background:linear-gradient(110deg,#337dff,#8c68ff 55%,#36d9ff);box-shadow:0 10px 30px rgba(67,133,255,.28),inset 0 1px rgba(255,255,255,.35);font-size:15px}
+.btn-glass{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px rgba(255,255,255,.08)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.section{padding:16px;margin:14px 0}
+.section-title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.13em;margin:0 0 11px 3px}
+.voucher{display:flex;gap:8px}
+.input{min-width:0;flex:1;height:49px;border-radius:15px;border:1px solid rgba(255,255,255,.13);background:rgba(0,0,0,.19);color:white;padding:0 14px;outline:none;font-size:14px}
+.input:focus{border-color:rgba(103,232,255,.55);box-shadow:0 0 0 3px rgba(103,232,255,.08)}
+.voucher .btn{min-height:49px}
+.footer{text-align:center;color:#74819e;font-size:10px;margin-top:18px;letter-spacing:.05em}
+.modal{display:none;position:fixed;z-index:20;inset:0;background:rgba(1,3,10,.68);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:18px;overflow:auto}
+.modal.show{display:flex;align-items:center;justify-content:center}
+.modal-card{width:min(100%,430px);max-height:88vh;overflow:auto;padding:20px;border-radius:28px;background:linear-gradient(150deg,rgba(25,34,65,.94),rgba(10,14,31,.94));border:1px solid rgba(181,225,255,.24);box-shadow:0 30px 90px rgba(0,0,0,.58),inset 0 1px rgba(255,255,255,.13)}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:15px}
+.modal-head h3{margin:0;font-size:17px}
+.close{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.07);color:white;font-size:21px;cursor:pointer}
+.coin-ring{width:104px;height:104px;margin:10px auto 18px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(103,232,255,.35);background:radial-gradient(circle,rgba(103,232,255,.18),rgba(181,121,255,.07) 55%,transparent 56%);box-shadow:0 0 42px rgba(103,232,255,.16)}
+.coin-ring b{font-size:31px;color:var(--cyan);text-shadow:0 0 17px rgba(103,232,255,.5)}
+.progress{height:9px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin:12px 0 7px}
+.progress span{display:block;height:100%;width:70%;background:linear-gradient(90deg,var(--violet),var(--cyan));border-radius:inherit;box-shadow:0 0 16px var(--cyan);transition:width .45s linear}
+.progress-msg{text-align:center;color:var(--muted);font-size:12px;min-height:18px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
+.stat{padding:15px;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.09);text-align:center}
+.stat small{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.stat strong{font-size:17px}
+table{width:100%;border-collapse:separate;border-spacing:0 8px;font-size:12px}
+th{color:var(--muted);font-weight:600;text-align:left;padding:0 9px 4px}
+td{padding:12px 9px;background:rgba(255,255,255,.055);border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)}
+td:first-child{border-radius:13px 0 0 13px;border-left:1px solid rgba(255,255,255,.07)}
+td:last-child{border-radius:0 13px 13px 0;border-right:1px solid rgba(255,255,255,.07)}
+.smallbtn{min-height:36px;padding:0 11px;border-radius:11px;font-size:11px}
+.notice{padding:12px;border-radius:14px;background:rgba(103,232,255,.06);border:1px solid rgba(103,232,255,.11);color:#bfd3eb;font-size:11px;line-height:1.5;margin-top:12px}
+@media(max-width:350px){.shell{width:96%}.hero{padding:17px}.time{font-size:27px}.grid2{grid-template-columns:1fr}.voucher{display:block}.voucher .btn{width:100%;margin-top:8px}}
+@supports not ((backdrop-filter:blur(2px)) or (-webkit-backdrop-filter:blur(2px))){.glass,.modal-card{background:#11182d}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="brand">
+    <div class="logo-orb"><span>LPB</span></div>
+    <h1>{{ title }}</h1>
+    <p>FAST • SIMPLE • CONNECTED</p>
+  </div>
+
+  <main class="glass hero">
+    <div class="status">
+      <div class="pill"><span class="dot"></span><span>CONNECTED</span></div>
+      <div class="device">IP {{ ip }}<br>MAC {{ mac }}</div>
+    </div>
+    <div class="time-label">Remaining Time</div>
+    <div class="time" id="rtime">{{getUserremainingTime | raw}}</div>
+
+    <button class="btn btn-primary" type="button" id="multicoinslot">INSERT COIN</button>
+    <div class="grid2">
+      <button class="btn btn-glass" type="button" id="pfunc">{{ PauseResume }}</button>
+      <button class="btn btn-glass" type="button" id="rates">WIFI RATES</button>
+    </div>
+  </main>
+
+  <section class="glass section">
+    <div class="section-title">Redeem Voucher</div>
+    <div class="voucher">
+      <input class="input" type="text" id="vcode" placeholder="Enter voucher code" autocomplete="off">
+      <button class="btn btn-glass" type="button" id="sub-voucher">REDEEM</button>
+    </div>
+  </section>
+
+  <div class="footer">Powered by {{ title }} • Lightweight portal</div>
+</div>
+
+<!-- WIFI RATES -->
+<div id="wifirates" class="modal">
+ <div class="modal-card">
+  <div class="modal-head"><h3>WiFi Rates</h3><button class="close" type="button" data-close="wifirates">×</button></div>
+  <table>
+   <thead><tr><th>Amount</th><th>Time</th><th>Note</th></tr></thead>
+   <tbody>
+   {% for c in crates if c.time %}
+    <tr><td>₱{{ c.pulses }}</td><td class="cconvert{{ c.pulses }}"></td><td>{{ c.note }}</td></tr>
+   {% endfor %}
+   </tbody>
+  </table>
+ </div>
+</div>
+
+<!-- MULTI COINSLOT -->
+<div id="coinslots" class="modal">
+ <div class="modal-card">
+  <div class="modal-head"><h3>Select Coin Slot</h3><button class="close" type="button" data-close="coinslots">×</button></div>
+  <table>
+   <thead><tr><th>Name</th><th>Description</th><th>Action</th></tr></thead>
+   <tbody>
+    {% if mainvendo == 1 %}
+    <tr>
+      <td>{{ cname }}</td>
+      <td>{{ cdescription }}</td>
+      <td><button type="button" value="zxcv" class="btn btn-primary smallbtn insert_coin_button">INSERT</button></td>
+    </tr>
+    {% endif %}
+
+    {% for m in multicoinslot %}
+      {% if m.mac %}
+      <tr>
+        <td>{{ m.coinslotname }}</td>
+        <td>{{ m.description }}</td>
+        <td><button type="button" value="{{ m.mac }}" class="btn btn-primary smallbtn insert_coin_button">INSERT</button></td>
+      </tr>
+      {% endif %}
+    {% endfor %}
+   </tbody>
+  </table>
+  <div class="notice">Choose the coin slot nearest to you, then insert coins only after the payment screen appears.</div>
+ </div>
+</div>
+
+<!-- INSERT COIN -->
+<div id="insertcoin" class="modal">
+ <div class="modal-card">
+  <div class="modal-head"><h3>Insert Coin</h3><button class="close" type="button" id="cancel-x">×</button></div>
+  <div class="coin-ring"><b>₱</b></div>
+  <div class="progress"><span id="progressBar"></span></div>
+  <div class="progress-msg" id="progress-msg">Preparing coin slot…</div>
+  <div class="stats">
+    <div class="stat"><small>Total Amount</small><strong>₱<span id="tamount">0.00</span></strong></div>
+    <div class="stat"><small>Total Time</small><strong id="ttime">--</strong></div>
+  </div>
+  <button type="button" class="btn btn-primary" id="done-paying">CANCEL</button>
+ </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var CLIENT_IP="{{ ip }}", CLIENT_MAC="{{ mac }}";
+var totaltime=parseInt("{{ remainingTime }}",10)||0;
+var timeleft=50,timetotal=50,totalamount=0,currentCoinSlot=null,coinPollTimer=null,progressTimer=null,paymentActive=false;
+
+function el(id){return document.getElementById(id)}
+function show(id){el(id).classList.add("show")}
+function hide(id){el(id).classList.remove("show")}
+function encode(data){
+ var out=[],k; for(k in data){if(Object.prototype.hasOwnProperty.call(data,k))out.push(encodeURIComponent(k)+"="+encodeURIComponent(data[k]));}
+ return out.join("&");
+}
+function request(method,url,data,ok,fail){
+ var x=new XMLHttpRequest();
+ x.open(method,url,true);
+ if(method==="POST")x.setRequestHeader("Content-Type","application/x-www-form-urlencoded; charset=UTF-8");
+ x.onreadystatechange=function(){if(x.readyState===4){if(x.status>=200&&x.status<300){if(ok)ok(x.responseText)}else if(fail)fail(x.status)}};
+ x.send(method==="POST"?encode(data||{}):null);
+}
+function formatSeconds(sec){
+ sec=Math.max(0,parseInt(sec,10)||0);
+ var d=Math.floor(sec/86400),h=Math.floor(sec%86400/3600),m=Math.floor(sec%3600/60),s=sec%60;
+ if(d>0)return "<b>"+d+"</b> d. <b>"+h+"</b> hr. <b>"+m+"</b> min. <b>"+s+"</b> sec.";
+ if(h>0)return "<b>"+h+"</b> hr. <b>"+m+"</b> min. <b>"+s+"</b> sec.";
+ return "<b>"+m+"</b> min. <b>"+s+"</b> sec.";
+}
+function clock(){
+ if(totaltime>0){totaltime--;el("rtime").innerHTML=formatSeconds(totaltime);}
+ else if(totaltime===0){el("rtime").innerHTML="--";}
+ setTimeout(clock,1000);
+}
+function stopTimers(){if(coinPollTimer){clearTimeout(coinPollTimer);coinPollTimer=null}if(progressTimer){clearTimeout(progressTimer);progressTimer=null}}
+function iclaim(slot){request("GET","admin/index?isend=1&func=iclaim&coinslot="+encodeURIComponent(slot));}
+function coinstat(slot){
+ if(!paymentActive)return;
+ request("GET","coinstat.php?m="+encodeURIComponent(CLIENT_IP)+"&coinslot="+encodeURIComponent(slot),null,function(data){
+   if(!paymentActive)return;
+   try{
+    var j=JSON.parse(data);
+    if(Number(j.status)>0){
+      totalamount+=parseFloat(j.amount)||0;
+      el("tamount").textContent=totalamount.toFixed(2);
+      el("ttime").textContent=j.minutes;
+      el("done-paying").textContent="DONE PAYING";
+      timeleft=timetotal;
+    }
+   }catch(e){}
+   coinPollTimer=setTimeout(function(){coinstat(slot)},888);
+ },function(){coinPollTimer=setTimeout(function(){coinstat(slot)},1200)});
+}
+function progress(slot){
+ if(!paymentActive)return;
+ el("progressBar").style.width=((timeleft/timetotal)*100)+"%";
+ el("progress-msg").textContent="Waiting for "+timeleft+" seconds";
+ if(timeleft>0){timeleft--;progressTimer=setTimeout(function(){progress(slot)},1000);}
+ else{paymentActive=false;stopTimers();iclaim(slot);location.reload();}
+}
+function beginPayment(slot){
+ currentCoinSlot=slot; totalamount=0; timeleft=timetotal;
+ el("tamount").textContent="0.00";el("ttime").textContent="--";el("done-paying").textContent="CANCEL";
+ request("POST","admin/index?sinsertcoin=1",{ip:CLIENT_IP,mac:CLIENT_MAC,coinslot:slot},function(msg){
+   msg=String(msg).trim();
+   if(msg==="1"){
+     hide("coinslots");show("insertcoin");paymentActive=true;coinstat(slot);progress(slot);
+   }else if(msg==="15"){alert("Another user is inserting coins. Please wait.");}
+   else{alert(msg);}
+ });
+}
+function finishPayment(){
+ if(!currentCoinSlot)return;
+ var slot=currentCoinSlot;
+ request("POST","admin/index?sclaim=1",{f:"dbuying",p:slot},function(msg){
+   paymentActive=false;stopTimers();iclaim(slot);
+   if(String(msg).trim()==="1")alert("Successfully claimed your time!");
+   location.reload();
+ },function(){paymentActive=false;stopTimers();iclaim(slot);location.reload();});
+}
+function closePayment(){
+ if(!currentCoinSlot){hide("insertcoin");return}
+ paymentActive=false;stopTimers();iclaim(currentCoinSlot);location.reload();
+}
+
+if(el("multicoinslot"))el("multicoinslot").addEventListener("click",function(){
+ var body=el("coinslots").getElementsByTagName("tbody")[0];
+ if(body && body.getElementsByTagName("tr").length===0){
+   body.innerHTML='<tr><td colspan="3" style="text-align:center;color:#ffb9c8">LPB returned no coin-slot rows.</td></tr>';
+ }
+ show("coinslots");
+});
+el("rates").addEventListener("click",function(){show("wifirates")});
+el("pfunc").addEventListener("click",function(){
+ request("POST","admin/index?pfunc=1",{ip:CLIENT_IP,mac:CLIENT_MAC},function(msg){
+  msg=String(msg).trim();
+  if(msg==="1")alert("You successfully paused your time!");
+  else if(msg==="2")alert("You successfully resumed your time!");
+  else if(msg==="3")alert("Error!");
+  else alert(msg);
+  location.reload();
+ });
+});
+el("sub-voucher").addEventListener("click",function(){
+ var v=el("vcode").value.trim(); if(!v){alert("Enter a voucher code.");return}
+ request("POST","admin/index?svouchers=1",{ip:CLIENT_IP,mac:CLIENT_MAC,vcode:v},function(msg){
+  msg=String(msg).trim();
+  if(msg==="1"){alert("Voucher code "+v+" successfully redeemed");location.reload();}
+  else{el("vcode").value="";alert(msg);}
+ });
+});
+el("done-paying").addEventListener("click",function(){if(totalamount>0)finishPayment();else closePayment()});
+el("cancel-x").addEventListener("click",closePayment);
+document.addEventListener("click",function(e){
+ var b=e.target;
+ while(b&&b!==document&&!b.classList.contains("insert_coin_button"))b=b.parentNode;
+ if(b&&b.classList&&b.classList.contains("insert_coin_button"))beginPayment(b.value);
+ var c=e.target.getAttribute&&e.target.getAttribute("data-close");if(c)hide(c);
+});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"){hide("wifirates");hide("coinslots")}});
+clock();
+})();
+</script>
+</body>
+</html>

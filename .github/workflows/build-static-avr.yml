@@ -1,0 +1,133 @@
+name: Build clean-room static AVR host tools
+
+on:
+  push:
+    branches:
+      - blaze-arduino-ide-ci
+    paths:
+      - ".github/workflows/build-static-avr.yml"
+      - "toolchain/**"
+  workflow_dispatch:
+
+jobs:
+  build-avr-host-tools:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Canadian-cross dependencies
+        run: |
+          set -euxo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            autoconf automake bison build-essential flex gawk git gperf help2man \
+            libncurses5-dev libtool-bin make patch python3 rsync texinfo unzip wget xz-utils \
+            gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+            libc6-dev-arm64-cross libstdc++-11-dev-arm64-cross \
+            file binutils-aarch64-linux-gnu
+
+      - name: Build crosstool-NG 1.24 branch with Canadian-cross fixes
+        run: |
+          set -euxo pipefail
+          git clone --depth 1 --branch xtensa-1.24.x \
+            https://github.com/jcmvbkbc/crosstool-NG.git /tmp/ctng
+          cd /tmp/ctng
+          ./bootstrap
+          ./configure --enable-local
+          make -j2
+
+      - name: Configure static AArch64 host to AVR target
+        run: |
+          set -euxo pipefail
+          cd /tmp/ctng
+          mkdir -p 'samples/aarch64-linux-gnu,avr'
+          cat > 'samples/aarch64-linux-gnu,avr/crosstool.config' <<'EOF'
+          CT_CONFIG_VERSION="3"
+          CT_EXPERIMENTAL=y
+          # CT_PREFIX_DIR_RO is not set
+          CT_ARCH_AVR=y
+          CT_STATIC_TOOLCHAIN=y
+          CT_CANADIAN=y
+          CT_HOST="aarch64-linux-gnu"
+          CT_BINUTILS_V_2_26=y
+          CT_GCC_V_7_3_0=y
+          CT_CC_LANG_CXX=y
+          # CT_DEBUG_GDB is not set
+          EOF
+          echo "OpenAI clean-room build for BlazingSystems" > 'samples/aarch64-linux-gnu,avr/reported.by'
+          ./ct-ng 'aarch64-linux-gnu,avr'
+          ./ct-ng olddefconfig
+          grep -E '^(CT_ARCH=|CT_HOST=|CT_STATIC_TOOLCHAIN=|CT_GCC_VERSION=|CT_BINUTILS_VERSION=|CT_TOOLCHAIN_TYPE=|CT_PREFIX_DIR=)' .config | tee /tmp/resolved-config.txt
+
+      - name: Build static host tools
+        run: |
+          set -euxo pipefail
+          cd /tmp/ctng
+          ./ct-ng build.4
+
+      - name: Locate and verify produced host executables
+        run: |
+          set -euxo pipefail
+          find "$HOME/x-tools" -maxdepth 7 -type f | sort | head -250 || true
+          mkdir -p /tmp/verified
+          for name in avr-gcc avr-g++ avr-ar avr-objcopy avr-size avr-nm; do
+            f="$(find "$HOME/x-tools" -type f -name "$name" | head -1)"
+            test -n "$f"
+            cp "$f" "/tmp/verified/$name"
+          done
+          for name in cc1 cc1plus collect2 lto1 lto-wrapper; do
+            f="$(find "$HOME/x-tools" -type f -name "$name" | head -1 || true)"
+            if [ -n "$f" ]; then cp "$f" "/tmp/verified/$name"; fi
+          done
+          for name in as ld; do
+            f="$(find "$HOME/x-tools" -type f -path "*/avr/bin/$name" | head -1 || true)"
+            if [ -n "$f" ]; then cp "$f" "/tmp/verified/$name"; fi
+          done
+
+          {
+            echo "# static AVR host tool verification"
+            for f in /tmp/verified/*; do
+              echo "===== $(basename "$f") ====="
+              file "$f"
+              aarch64-linux-gnu-readelf -l "$f" 2>/dev/null | grep -E 'interpreter|INTERP' || echo NO_INTERP_SEGMENT
+              aarch64-linux-gnu-readelf -d "$f" 2>/dev/null | grep NEEDED || echo NO_DYNAMIC_NEEDED
+            done
+          } | tee /tmp/static-verification.txt
+
+          if grep -q 'Requesting program interpreter' /tmp/static-verification.txt; then
+            echo "ERROR: at least one produced executable is dynamically linked" >&2
+            exit 1
+          fi
+
+      - name: Package APK-native compiler payload
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/payload/arm64-v8a
+          cp /tmp/verified/avr-gcc /tmp/payload/arm64-v8a/libavr_avr-gcc.so
+          cp /tmp/verified/avr-g++ /tmp/payload/arm64-v8a/libavr_avr-g++.so
+          cp /tmp/verified/avr-ar /tmp/payload/arm64-v8a/libavr_avr-ar.so
+          cp /tmp/verified/avr-objcopy /tmp/payload/arm64-v8a/libavr_avr-objcopy.so
+          cp /tmp/verified/avr-size /tmp/payload/arm64-v8a/libavr_avr-size.so
+          cp /tmp/verified/avr-nm /tmp/payload/arm64-v8a/libavr_nm.so
+          [ ! -f /tmp/verified/cc1 ] || cp /tmp/verified/cc1 /tmp/payload/arm64-v8a/libavr_cc1.so
+          [ ! -f /tmp/verified/cc1plus ] || cp /tmp/verified/cc1plus /tmp/payload/arm64-v8a/libavr_cc1plus.so
+          [ ! -f /tmp/verified/collect2 ] || cp /tmp/verified/collect2 /tmp/payload/arm64-v8a/libavr_collect2.so
+          [ ! -f /tmp/verified/lto1 ] || cp /tmp/verified/lto1 /tmp/payload/arm64-v8a/libavr_lto1.so
+          [ ! -f /tmp/verified/lto-wrapper ] || cp /tmp/verified/lto-wrapper /tmp/payload/arm64-v8a/libavr_lto-wrapper.so
+          [ ! -f /tmp/verified/as ] || cp /tmp/verified/as /tmp/payload/arm64-v8a/libavr_as.so
+          [ ! -f /tmp/verified/ld ] || cp /tmp/verified/ld /tmp/payload/arm64-v8a/libavr_ld.so
+          cp /tmp/static-verification.txt /tmp/payload/
+          cp /tmp/resolved-config.txt /tmp/payload/
+          tar -C /tmp/payload -czf /tmp/blaze-avr-host-tools-arm64.tar.gz .
+          sha256sum /tmp/blaze-avr-host-tools-arm64.tar.gz | tee /tmp/blaze-avr-host-tools-arm64.tar.gz.sha256
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blaze-avr-host-tools-arm64
+          path: |
+            /tmp/blaze-avr-host-tools-arm64.tar.gz
+            /tmp/blaze-avr-host-tools-arm64.tar.gz.sha256
+            /tmp/static-verification.txt
+            /tmp/resolved-config.txt
+          if-no-files-found: error

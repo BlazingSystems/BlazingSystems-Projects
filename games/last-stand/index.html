@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#111827">
+<title>Last Stand - Endless Strategy</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1220;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#fff}
+#wrap{height:100%;display:grid;place-items:center}
+#gamebox{position:relative;width:min(100vw,520px);height:100vh;max-height:920px;background:#162235;overflow:hidden;touch-action:none}
+canvas{width:100%;height:100%;display:block}
+#hud{position:absolute;left:0;right:0;top:0;padding:10px 12px;display:flex;justify-content:space-between;pointer-events:none;text-shadow:0 2px 3px #000}
+.pill{background:#0008;border:1px solid #ffffff28;border-radius:16px;padding:6px 10px;font-weight:800;font-size:13px}
+#upgradeBar{position:absolute;left:8px;right:8px;bottom:9px;display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+button{border:0;border-radius:13px;min-height:58px;color:#fff;background:linear-gradient(#168bd2,#0871b6);font-weight:900;box-shadow:0 4px 0 #07558a,0 7px 14px #0005;padding:5px;font-size:13px}
+button:active{transform:translateY(3px);box-shadow:0 1px 0 #07558a}
+button small{display:block;font-size:10px;font-weight:700;opacity:.85;margin-top:2px}
+#choice,#gameover,#start{position:absolute;inset:0;background:#07101cdb;display:none;align-items:center;justify-content:center;padding:20px}
+.panel{width:100%;max-width:410px;background:#16283e;border:2px solid #ffffff22;border-radius:22px;padding:18px;text-align:center;box-shadow:0 20px 60px #000a}
+.panel h1,.panel h2{margin:3px 0 8px}.panel p{opacity:.8;margin:5px 0 14px}
+.choice{width:100%;margin:6px 0;background:linear-gradient(#7357d8,#5439b8);box-shadow:0 4px 0 #3e298b}
+#start{display:flex;background:linear-gradient(#55bde0,#bfe9ef)}#start .panel{background:#14243b}
+#start button,#gameover button{width:100%;background:linear-gradient(#63bd35,#3e9820);box-shadow:0 4px 0 #286e13;font-size:18px}
+.logo{font-size:42px;font-weight:1000;letter-spacing:-2px}.sub{font-size:13px;line-height:1.45}
+#toast{position:absolute;top:72px;left:50%;transform:translateX(-50%);font-weight:1000;font-size:24px;text-shadow:0 3px 4px #000;pointer-events:none;opacity:0}
+</style></head>
+<body><div id="wrap"><div id="gamebox">
+<canvas id="c"></canvas>
+<div id="hud"><div class="pill" id="wave">WAVE 1</div><div class="pill" id="stats">❤ 100　💰 0</div></div>
+<div id="toast"></div>
+<div id="upgradeBar"><button id="dmg">DAMAGE<small></small></button><button id="rate">FIRE RATE<small></small></button><button id="eco">ECONOMY<small></small></button></div>
+<div id="choice"><div class="panel"><h2>TACTICAL CHOICE</h2><p>Pick one upgrade.</p><div id="choices"></div></div></div>
+<div id="gameover"><div class="panel"><h1>BASE LOST</h1><p id="result"></p><button id="again">PLAY AGAIN</button></div></div>
+<div id="start"><div class="panel"><div class="logo">LAST<br>STAND</div><p class="sub">Endless auto-defense.<br>Upgrade firepower, fire rate or economy.<br>Every 5 waves, choose a tactical perk.</p><button id="play">PLAY</button><p class="sub" id="best"></p></div></div>
+</div></div>
+<script>
+(()=>{"use strict";
+const C=document.getElementById("c"),X=C.getContext("2d"),box=document.getElementById("gamebox");
+let W=360,H=720,DPR=1,last=0,running=false,t=0,wave=1,kills=0,coins=0,hp=100,maxHp=100;
+let damage=8,fireDelay=.48,shotClock=0,eco=1,crit=.05,multishot=1,pierce=0,slow=0;
+let enemies=[],bullets=[],particles=[],texts=[],nextSpawn=0,waveKills=0,targetKills=8;
+let dmgLv=1,rateLv=1,ecoLv=1;
+const $=id=>document.getElementById(id), rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=box.clientWidth;H=box.clientHeight;C.width=W*DPR;C.height=H*DPR;X.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener("resize",resize);resize();
+function reset(){t=0;wave=1;kills=0;coins=0;hp=maxHp=100;damage=8;fireDelay=.48;shotClock=0;eco=1;crit=.05;multishot=1;pierce=0;slow=0;enemies=[];bullets=[];particles=[];texts=[];nextSpawn=.5;waveKills=0;targetKills=8;dmgLv=rateLv=ecoLv=1;running=true;updateUI();toast("WAVE 1")}
+function enemy(){const boss=wave%10===0&&waveKills===0;const scale=Math.pow(1.105,wave-1);let e={x:rand(25,W-25),y:92,r:boss?24:rand(12,17),hp:(boss?100:20)*scale,max:0,speed:(boss?16:rand(25,39))*(1+wave*.006),value:Math.ceil((boss?18:2)*(1+wave*.07)),boss,hit:0};e.max=e.hp;enemies.push(e)}
+function shoot(){if(!enemies.length)return;let sorted=[...enemies].sort((a,b)=>b.y-a.y),n=multishot;for(let i=0;i<n;i++){let tar=sorted[i%sorted.length],sx=W/2+(i-(n-1)/2)*9,sy=H-112;let dx=tar.x-sx,dy=tar.y-sy,l=Math.hypot(dx,dy)||1;bullets.push({x:sx,y:sy,vx:dx/l*430,vy:dy/l*430,dmg:damage,p:pierce})}}
+function burst(x,y,n=7){for(let i=0;i<n;i++)particles.push({x,y,vx:rand(-90,90),vy:rand(-90,40),life:rand(.25,.6),s:rand(2,5)})}
+function floatText(x,y,s){texts.push({x,y,s,life:.75})}
+function toast(s){let q=$("toast");q.textContent=s;q.style.opacity=1;clearTimeout(toast._t);toast._t=setTimeout(()=>q.style.opacity=0,900)}
+function nextWave(){wave++;waveKills=0;targetKills=8+Math.floor(wave*1.35);toast(wave%10===0?"BOSS WAVE":"WAVE "+wave);if(wave%5===0){running=false;showChoices()}updateUI()}
+function showChoices(){const pool=[["HEAVY ROUNDS","+35% damage",()=>damage*=1.35],["OVERCLOCK","15% faster firing",()=>fireDelay=Math.max(.095,fireDelay*.85)],["TRIPLE TAP","+1 projectile",()=>multishot=Math.min(5,multishot+1)],["CRITICAL","+8% crit chance",()=>crit=Math.min(.55,crit+.08)],["FORTIFY","+30 max HP & heal",()=>{maxHp+=30;hp=Math.min(maxHp,hp+30)}],["RICH HARVEST","+30% coin income",()=>eco*=1.3],["PIERCING","Bullets pierce +1 enemy",()=>pierce++],["CRYO AMMO","Enemies move 8% slower",()=>slow=Math.min(.4,slow+.08)]];pool.sort(()=>Math.random()-.5);let picks=pool.slice(0,3),el=$("choices");el.innerHTML="";picks.forEach(p=>{let b=document.createElement("button");b.className="choice";b.innerHTML=p[0]+"<small>"+p[1]+"</small>";b.onclick=()=>{p[2]();$("choice").style.display="none";running=true;updateUI()};el.appendChild(b)});$("choice").style.display="flex"}
+function cost(type,lv){let base=type==="dmg"?12:type==="rate"?15:18;return Math.floor(base*Math.pow(1.42,lv-1))}
+function buy(type){let lv=type==="dmg"?dmgLv:type==="rate"?rateLv:ecoLv,c=cost(type,lv);if(coins<c){toast("NEED "+c+" COINS");return}coins-=c;if(type==="dmg"){dmgLv++;damage*=1.18}else if(type==="rate"){rateLv++;fireDelay=Math.max(.095,fireDelay*.92)}else{ecoLv++;eco*=1.2}updateUI()}
+$("dmg").onclick=()=>buy("dmg");$("rate").onclick=()=>buy("rate");$("eco").onclick=()=>buy("eco");
+function updateUI(){$("wave").textContent="WAVE "+wave+" • "+waveKills+"/"+targetKills;$("stats").textContent="❤ "+Math.ceil(hp)+"/"+maxHp+"　💰 "+Math.floor(coins);$("dmg").querySelector("small").textContent="Lv "+dmgLv+" • 💰"+cost("dmg",dmgLv);$("rate").querySelector("small").textContent="Lv "+rateLv+" • 💰"+cost("rate",rateLv);$("eco").querySelector("small").textContent="Lv "+ecoLv+" • 💰"+cost("eco",ecoLv)}
+function over(){running=false;let best=Math.max(+localStorage.lastStandBest||0,wave);localStorage.lastStandBest=best;$("result").textContent="Wave "+wave+" • "+kills+" kills • Best wave "+best;$("gameover").style.display="flex"}
+function update(dt){if(!running)return;t+=dt;shotClock-=dt;nextSpawn-=dt;let cap=Math.min(18,4+Math.floor(wave/3));if(nextSpawn<=0&&enemies.length<cap&&waveKills+enemies.length<targetKills){enemy();nextSpawn=Math.max(.24,1.12-wave*.018)*rand(.75,1.2)}if(shotClock<=0&&enemies.length){shoot();shotClock=fireDelay}for(let i=enemies.length-1;i>=0;i--){let e=enemies[i];e.y+=e.speed*(1-slow)*dt;e.hit=Math.max(0,e.hit-dt);if(e.y>H-135){hp-=e.boss?32:10;burst(e.x,e.y,12);enemies.splice(i,1);waveKills++;if(hp<=0){hp=0;updateUI();over();return}}}for(let i=bullets.length-1;i>=0;i--){let b=bullets[i];b.x+=b.vx*dt;b.y+=b.vy*dt;let gone=b.y<60||b.x<0||b.x>W;if(!gone)for(let j=enemies.length-1;j>=0;j--){let e=enemies[j];if(Math.hypot(b.x-e.x,b.y-e.y)<e.r+4){let cr=Math.random()<crit,d=b.dmg*(cr?2:1);e.hp-=d;e.hit=.08;floatText(e.x,e.y-e.r,Math.round(d)+(cr?"!":""));burst(b.x,b.y,3);if(e.hp<=0){coins+=e.value*eco;kills++;waveKills++;burst(e.x,e.y,e.boss?25:10);enemies.splice(j,1)}if(b.p>0)b.p--;else{gone=true;break}}}if(gone)bullets.splice(i,1)}particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=170*dt;p.life-=dt});particles=particles.filter(p=>p.life>0);texts.forEach(a=>{a.y-=35*dt;a.life-=dt});texts=texts.filter(a=>a.life>0);if(waveKills>=targetKills&&!enemies.length)nextWave();updateUI()}
+function draw(){X.clearRect(0,0,W,H);let g=X.createLinearGradient(0,0,0,H);g.addColorStop(0,"#79cce4");g.addColorStop(.43,"#d7d69d");g.addColorStop(.44,"#684c39");g.addColorStop(1,"#33271f");X.fillStyle=g;X.fillRect(0,0,W,H);X.fillStyle="#ad8b5d";X.fillRect(0,H*.39,W,8);X.fillStyle="#4b382c";X.fillRect(12,H*.45,W-24,H*.43);X.strokeStyle="#ffffff12";X.lineWidth=2;for(let x=45;x<W;x+=75){X.beginPath();X.moveTo(x,H*.47);X.lineTo(x,H*.84);X.stroke()}X.fillStyle="#1f8f48";X.fillRect(0,H-135,W,62);X.fillStyle="#43bd62";X.fillRect(0,H-135,W,11);X.fillStyle="#26394b";X.fillRect(W/2-25,H-125,50,37);X.fillStyle="#111";X.fillRect(W/2-5,H-150,10,31);X.fillStyle="#ffce3d";X.beginPath();X.arc(W/2,H-111,6,0,7);X.fill();enemies.forEach(e=>{X.save();X.translate(e.x,e.y);X.fillStyle=e.hit?"#fff":e.boss?"#d94b43":"#3d9c70";X.fillRect(-e.r,-e.r,e.r*2,e.r*2);X.fillStyle="#17332b";X.fillRect(-e.r*.6,-e.r*.45,e.r*.35,e.r*.32);X.fillRect(e.r*.25,-e.r*.45,e.r*.35,e.r*.32);X.fillStyle="#ef504d";X.fillRect(-e.r*.5,e.r*.25,e.r,e.r*.22);X.restore();X.fillStyle="#1a1a1a";X.fillRect(e.x-e.r,e.y-e.r-7,e.r*2,4);X.fillStyle="#64d45b";X.fillRect(e.x-e.r,e.y-e.r-7,e.r*2*clamp(e.hp/e.max,0,1),4)});X.fillStyle="#ffe36b";bullets.forEach(b=>{X.beginPath();X.arc(b.x,b.y,3.5,0,7);X.fill()});particles.forEach(p=>{X.globalAlpha=clamp(p.life*2,0,1);X.fillStyle="#ffb52e";X.fillRect(p.x,p.y,p.s,p.s)});X.globalAlpha=1;texts.forEach(a=>{X.globalAlpha=clamp(a.life*2,0,1);X.fillStyle="#fff";X.font="bold 14px system-ui";X.textAlign="center";X.fillText(a.s,a.x,a.y)});X.globalAlpha=1}
+function loop(ms){let now=ms/1000,dt=Math.min(.033,now-last||.016);last=now;update(dt);draw();requestAnimationFrame(loop)}
+$("play").onclick=()=>{$("start").style.display="none";reset()};$("again").onclick=()=>{$("gameover").style.display="none";reset()};$("best").textContent="Best wave: "+(+localStorage.lastStandBest||0);requestAnimationFrame(loop);
+})();
+</script></body></html>

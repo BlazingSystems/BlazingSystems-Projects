@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Marine Operations Logbook Demo</title>
+<style>
+body{margin:0;background:#0c1118;color:#eef4fb;font:15px/1.5 system-ui,sans-serif}
+main{max-width:900px;margin:auto;padding:28px}.card{background:#131c27;border:1px solid #2a394b;border-radius:14px;padding:16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}label{display:block;color:#9fb0c4;font-size:12px;margin-bottom:4px}
+input,textarea,button{width:100%;box-sizing:border-box;border:1px solid #314258;background:#0b131c;color:#fff;border-radius:8px;padding:9px;font:inherit}
+button{cursor:pointer;background:#17304d}.muted{color:#93a5b9}.kpi{font-size:28px;font-weight:800}
+table{width:100%;border-collapse:collapse}th,td{padding:8px;border-bottom:1px solid #29384a;text-align:left;font-size:12px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style></head>
+<body><main>
+<h1>Marine Operations Logbook</h1>
+<p class="muted">Public portfolio demo using fictional data only.</p>
+
+<div class="card grid">
+<div><label>Vessel</label><input id="vessel" value="MV DEMO HORIZON"></div>
+<div><label>Reference</label><input id="ref" value="DEMO-001"></div>
+<div><label>Cargo</label><input id="cargo" value="Sample Bulk Cargo"></div>
+<div><label>Location</label><input id="location" value="Demo Terminal"></div>
+<div><label>Total quantity (t)</label><input id="total" type="number" value="10000"></div>
+<div><label>Quantity completed (t)</label><input id="done" type="number" value="2500"></div>
+</div>
+
+<div class="card"><div class="kpi" id="progress">25.0%</div><div class="muted">Operation progress</div></div>
+
+<div class="card">
+<h2>Daily Update</h2>
+<div class="grid">
+<div><label>Date</label><input id="date" type="date"></div>
+<div><label>Shift / period</label><input id="shift" value="0800-1700"></div>
+<div><label>Quantity this period (t)</label><input id="qty" type="number" value="1250"></div>
+<div><label>Trips / units</label><input id="trips" type="number" value="18"></div>
+</div>
+<label>Remarks</label><textarea id="remarks">Synthetic portfolio example.</textarea>
+<p><button id="add">Add Update</button></p>
+<table><thead><tr><th>Date</th><th>Period</th><th>Qty</th><th>Trips</th><th>Remarks</th></tr></thead><tbody id="rows"></tbody></table>
+</div>
+
+<div class="card">
+<h2>Simplified Draft Arithmetic</h2>
+<p class="muted">Educational illustration only.</p>
+<div class="grid">
+<div><label>Forward draft (m)</label><input id="fwd" type="number" step=".001" value="6.420"></div>
+<div><label>Aft draft (m)</label><input id="aft" type="number" step=".001" value="6.780"></div>
+</div>
+<p><button id="calc">Calculate Mean Draft</button></p>
+<div id="draftResult" class="kpi">6.600 m</div>
+</div>
+</main>
+<script>
+const KEY='marine_portfolio_demo';
+let logs=[];try{logs=JSON.parse(localStorage.getItem(KEY)||'[]')}catch{}
+function esc(v){return String(v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function render(){rows.innerHTML=logs.map(x=>'<tr><td>'+esc(x.date)+'</td><td>'+esc(x.shift)+'</td><td>'+x.qty+'</td><td>'+x.trips+'</td><td>'+esc(x.remarks)+'</td></tr>').join('')||'<tr><td colspan="5" class="muted">No updates yet.</td></tr>';const t=+total.value||0,d=+done.value||0;progress.textContent=(t?Math.min(100,d/t*100):0).toFixed(1)+'%'}
+add.onclick=()=>{logs.unshift({date:date.value||new Date().toISOString().slice(0,10),shift:shift.value,qty:+qty.value||0,trips:+trips.value||0,remarks:remarks.value});localStorage.setItem(KEY,JSON.stringify(logs));done.value=(+done.value||0)+(+qty.value||0);render()}
+calc.onclick=()=>{draftResult.textContent=(((+fwd.value||0)+(+aft.value||0))/2).toFixed(3)+' m'}
+total.oninput=done.oninput=render;date.value=new Date().toISOString().slice(0,10);render();
+</script></body></html>

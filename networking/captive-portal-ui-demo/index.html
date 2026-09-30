@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Captive Portal UI Demo</title>
+<style>
+body{margin:0;background:#07111b;color:#eff6ff;font:14px/1.5 system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;padding:20px}
+.phone{width:min(420px,100%);background:#0f1c29;border:1px solid #294158;border-radius:22px;padding:20px;box-shadow:0 24px 70px #0008}
+h1{margin:0}.muted{color:#91a8bd}.plans{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:18px 0}.plan{border:1px solid #2f4b65;border-radius:12px;padding:13px;cursor:pointer}.plan.on{background:#173958;border-color:#74b6ff}
+button,input{width:100%;box-sizing:border-box;border:1px solid #2f4b65;border-radius:9px;background:#0a151f;color:#fff;padding:10px;font:inherit}button{background:#1769aa;cursor:pointer;margin-top:9px}.status{margin-top:14px;padding:12px;border-radius:10px;background:#09141e}
+</style></head><body><main class="phone">
+<p class="muted">BlazingSystems · Networking UI Study</p><h1>Guest Internet Access</h1><p class="muted">Standalone interface demo. No production hotspot server is contacted.</p>
+<div class="plans" id="plans">
+<div class="plan on" data-min="30"><b>30 minutes</b><br><span class="muted">Demo plan A</span></div>
+<div class="plan" data-min="60"><b>1 hour</b><br><span class="muted">Demo plan B</span></div>
+<div class="plan" data-min="180"><b>3 hours</b><br><span class="muted">Demo plan C</span></div>
+<div class="plan" data-min="1440"><b>1 day</b><br><span class="muted">Demo plan D</span></div>
+</div>
+<label class="muted">Voucher code</label><input id="voucher" placeholder="DEMO-1234">
+<button id="connect">Simulate Connect</button><button id="pause">Pause / Resume</button>
+<div class="status" id="status">Ready. This public demo runs entirely in your browser.</div>
+<script>
+let minutes=30,paused=false;document.querySelectorAll('.plan').forEach(p=>p.onclick=()=>{document.querySelectorAll('.plan').forEach(x=>x.classList.remove('on'));p.classList.add('on');minutes=+p.dataset.min;status.textContent='Selected '+minutes+' minutes.'});
+connect.onclick=()=>{const code=voucher.value.trim()||'DEMO-GUEST';status.textContent='Demo session active · '+minutes+' minutes · voucher '+code+'. No network request was sent.'};
+pause.onclick=()=>{paused=!paused;status.textContent=paused?'Demo session paused.':'Demo session resumed.'};
+</script></main></body></html>

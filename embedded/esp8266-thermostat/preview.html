@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ESP8266 Thermostat UI Preview</title>
+<style>
+body{margin:0;background:#0b1118;color:#eef5fb;font:14px/1.5 system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;padding:20px}
+.device{width:min(520px,100%);background:#131d27;border:1px solid #2a3b4d;border-radius:18px;padding:20px}.temp{font-size:64px;font-weight:800}.muted{color:#95a9bc}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:#0c151f;border:1px solid #27394b;border-radius:12px;padding:14px}
+button,input{width:100%;box-sizing:border-box;padding:9px;border:1px solid #30455a;border-radius:8px;background:#0a121b;color:#fff;font:inherit}button{background:#173a59;cursor:pointer}
+</style></head><body><main class="device">
+<h1>ESP8266 Thermostat</h1><p class="muted">Static browser preview of the local device interface.</p>
+<div class="temp"><span id="temp">24.6</span>°C</div><p class="muted">Relay: <b id="relay">OFF</b> · Mode: <b id="mode">AUTO</b></p>
+<div class="grid"><div class="card"><label>Setpoint</label><input id="set" type="number" step=".1" value="25.0"></div><div class="card"><label>Hysteresis</label><input id="hys" type="number" step=".1" value="0.5"></div></div>
+<p><button id="toggle">Toggle Manual/AUTO</button></p><p class="muted">The real firmware serves its interface from the ESP8266. This preview does not connect to hardware.</p>
+<script>
+let auto=true;toggle.onclick=()=>{auto=!auto;mode.textContent=auto?'AUTO':'MANUAL';relay.textContent=auto?(+temp.textContent<+set.value?'ON':'OFF'):(relay.textContent==='ON'?'OFF':'ON')};set.oninput=()=>{if(auto)relay.textContent=+temp.textContent<+set.value?'ON':'OFF'};
+</script></main></body></html>

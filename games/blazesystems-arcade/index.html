@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BlazeSystems Arcade Demo</title>
+<style>
+body{margin:0;background:#090d13;color:#eef4fb;font:14px/1.5 system-ui,sans-serif}main{max-width:960px;margin:auto;padding:28px}.grid{display:grid;grid-template-columns:240px 1fr;gap:14px}
+.panel{background:#121923;border:1px solid #273547;border-radius:14px;padding:14px}.game{padding:10px;border:1px solid #2b3b50;border-radius:9px;margin:8px 0;cursor:pointer}.game:hover,.game.on{background:#17304c}
+canvas{width:100%;background:#05080d;border-radius:10px;display:block}.muted{color:#95a7bb}button{padding:9px 12px;border:1px solid #31445a;border-radius:8px;background:#17304d;color:#fff;cursor:pointer}
+@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style></head><body><main>
+<h1>BlazeSystems Arcade</h1><p class="muted">Portfolio-safe browser arcade demo. No ROMs, emulator cores, or third-party game assets are bundled.</p>
+<div class="grid"><aside class="panel"><h3>Library</h3><div class="game on">Pulse Runner</div><div class="game">Future Slot</div><div class="game">Future Slot</div><p class="muted">The original project explored local-game launching and emulator integration. This public build demonstrates the interface using an original mini-game only.</p></aside>
+<section class="panel"><canvas id="c" width="700" height="420"></canvas><p><button id="start">Start / Restart</button> <span id="score" class="muted">Score: 0</span></p><p class="muted">Move with ← → or A/D. Avoid the falling blocks.</p></section></div>
+<script>
+const x=c.getContext('2d');let px=330,blocks=[],score=0,running=false,last=0;
+function reset(){px=330;blocks=[];score=0;running=true;last=performance.now();requestAnimationFrame(loop)}
+function loop(t){if(!running)return;const dt=Math.min(.04,(t-last)/1000);last=t;if(Math.random()<dt*2.1)blocks.push({x:Math.random()*660,y:-24,s:20+Math.random()*22,v:110+Math.random()*150});
+x.clearRect(0,0,c.width,c.height);x.fillStyle='#0b1119';x.fillRect(0,0,c.width,c.height);x.fillStyle='#74b0ff';x.fillRect(px,375,40,24);
+for(const b of blocks){b.y+=b.v*dt;x.fillStyle='#ff7a8a';x.fillRect(b.x,b.y,b.s,b.s);if(b.y>360&&b.y<405&&b.x<px+40&&b.x+b.s>px){running=false}if(b.y>440)score++}
+blocks=blocks.filter(b=>b.y<450);document.getElementById('score').textContent='Score: '+score+(running?'':' — Game over');if(running)requestAnimationFrame(loop)}
+addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key.toLowerCase()==='a')px=Math.max(0,px-28);if(e.key==='ArrowRight'||e.key.toLowerCase()==='d')px=Math.min(660,px+28)});start.onclick=reset;reset();
+</script></main></body></html>

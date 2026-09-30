@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Daily Operations Update Demo</title>
+<style>
+body{margin:0;background:#0d1218;color:#eef4fb;font:14px/1.5 system-ui,sans-serif}main{max-width:860px;margin:auto;padding:28px}
+.card{background:#141d27;border:1px solid #2a394a;border-radius:14px;padding:16px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+label{display:block;color:#9dafc2;font-size:12px;margin-bottom:4px}input,textarea,button{box-sizing:border-box;width:100%;background:#0b131c;color:#fff;border:1px solid #314356;border-radius:8px;padding:9px;font:inherit}
+button{cursor:pointer;background:#17304d}.muted{color:#93a6b8}.report{white-space:pre-wrap;background:#091019;border-radius:10px;padding:14px;border:1px solid #263646}
+@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style></head><body><main>
+<h1>Daily Operations Update</h1><p class="muted">Standalone reporting demo with fictional sample values.</p>
+<div class="card grid">
+<div><label>Asset / Vessel</label><input id="asset" value="MV DEMO HORIZON"></div>
+<div><label>Reference</label><input id="ref" value="DEMO-001"></div>
+<div><label>Operation</label><input id="op" value="Discharging"></div>
+<div><label>Commodity</label><input id="cargo" value="Sample Bulk Cargo"></div>
+<div><label>Previous quantity</label><input id="prev" type="number" value="2400"></div>
+<div><label>Today quantity</label><input id="today" type="number" value="1250"></div>
+<div><label>Total order</label><input id="order" type="number" value="10000"></div>
+<div><label>Trips / units today</label><input id="trips" type="number" value="18"></div>
+<div style="grid-column:1/-1"><label>Remarks</label><textarea id="remarks">Normal operations. Synthetic demo only.</textarea></div>
+</div>
+<div class="card"><button id="build">Build Sample Update</button></div>
+<div class="card"><div id="output" class="report"></div></div>
+<script>
+function n(v){return (+v||0).toLocaleString(undefined,{maximumFractionDigits:2})}
+function render(){const td=(+prev.value||0)+(+today.value||0),bal=Math.max(0,(+order.value||0)-td);output.textContent=
+asset.value+' — '+op.value+'\nReference: '+ref.value+'\nCommodity: '+cargo.value+'\n\nPrevious: '+n(prev.value)+'\nToday: '+n(today.value)+'\nTo date: '+n(td)+'\nBalance: '+n(bal)+'\nTrips/units today: '+n(trips.value)+'\n\nRemarks: '+remarks.value+'\n\nPUBLIC PORTFOLIO DEMO — SYNTHETIC DATA';}
+build.onclick=render;document.querySelectorAll('input,textarea').forEach(x=>x.oninput=render);render();
+</script></main></body></html>

@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Draft Reading Trainer</title>
+<style>
+body{margin:0;background:#0a1017;color:#edf4fb;font:14px/1.5 system-ui,sans-serif}main{max-width:900px;margin:auto;padding:28px}
+.card{background:#131d28;border:1px solid #2a394c;border-radius:14px;padding:16px;margin:12px 0}.row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}.row>*{flex:1 1 180px}
+canvas{width:100%;height:auto;background:#d6e7f5;border-radius:12px;display:block}label{display:block;color:#9db0c3;font-size:12px;margin-bottom:4px}
+input,button{width:100%;box-sizing:border-box;background:#0a131d;color:#fff;border:1px solid #31445a;border-radius:8px;padding:9px;font:inherit}button{cursor:pointer;background:#183451}.muted{color:#93a6b8}.score{font-size:24px;font-weight:800}
+</style></head><body><main>
+<h1>Draft Reading Trainer</h1><p class="muted">Generic visual-reading exercise for training purposes.</p>
+<div class="card"><canvas id="c" width="900" height="420"></canvas></div>
+<div class="card row"><div><label>Your reading (m)</label><input id="answer" type="number" step=".01" placeholder="e.g. 6.42"></div><div><button id="check">Check Reading</button></div><div><button id="next">New Scenario</button></div></div>
+<div class="card"><div id="result" class="score">Ready</div><div class="muted">Tolerance: ±0.02 m. The scale is intentionally generic and not copied from any company form.</div></div>
+<script>
+const ctx=c.getContext('2d');let target=6.40;
+function draw(){
+ctx.clearRect(0,0,c.width,c.height);
+const waterY=210+Math.random()*60-30;
+ctx.fillStyle='#b9d9ee';ctx.fillRect(0,0,c.width,waterY);ctx.fillStyle='#255b7a';ctx.fillRect(0,waterY,c.width,c.height-waterY);
+ctx.fillStyle='#24303a';ctx.fillRect(540,30,210,350);
+ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.font='22px system-ui';ctx.fillStyle='#fff';
+const base=5.8;for(let i=0;i<=12;i++){const val=base+i*.1,y=350-i*24;ctx.beginPath();ctx.moveTo(550,y);ctx.lineTo(i%5===0?610:585,y);ctx.stroke();ctx.fillText(val.toFixed(1),620,y+7)}
+target=base+(350-waterY)/24*.1;result.textContent='Ready';answer.value='';
+}
+check.onclick=()=>{const v=+answer.value;if(!Number.isFinite(v)){result.textContent='Enter a reading';return}const e=Math.abs(v-target);result.textContent=e<=.02?'Correct — target '+target.toFixed(2)+' m':'Try again — target '+target.toFixed(2)+' m';};
+next.onclick=draw;draw();
+</script></main></body></html>

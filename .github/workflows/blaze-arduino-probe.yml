@@ -1,0 +1,57 @@
+name: Blaze Arduino Toolchain Probe
+
+on:
+  push:
+    branches:
+      - blaze-arduino-ide-ci
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install inspection tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq binutils-aarch64-linux-gnu file bzip2
+
+      - name: Download official Arduino ARM64 AVR toolchain
+        run: |
+          set -euxo pipefail
+          URL="https://downloads.arduino.cc/tools/avr-gcc-7.3.0-atmel3.6.1-arduino7-aarch64-pc-linux-gnu.tar.bz2"
+          curl -fL --retry 3 "$URL" -o /tmp/avr.tar.bz2
+          echo "03d322b9df6da17289e9e7c6233c34a8535d9c645c19efc772ba19e56914f339  /tmp/avr.tar.bz2" | sha256sum -c -
+          mkdir -p /tmp/avr
+          tar -xjf /tmp/avr.tar.bz2 -C /tmp/avr --strip-components=1
+
+      - name: Inspect host executables
+        run: |
+          set -euxo pipefail
+          {
+            echo "# Official Arduino ARM64 AVR toolchain probe"
+            echo
+            date -u
+            echo
+            for f in               /tmp/avr/bin/avr-gcc               /tmp/avr/bin/avr-g++               /tmp/avr/bin/avr-ar               /tmp/avr/bin/avr-objcopy               /tmp/avr/bin/avr-size               /tmp/avr/libexec/gcc/avr/7.3.0/cc1               /tmp/avr/libexec/gcc/avr/7.3.0/cc1plus; do
+              echo "===== $f ====="
+              file "$f" || true
+              aarch64-linux-gnu-readelf -l "$f" 2>/dev/null | grep -E 'interpreter|INTERP' || echo "NO_INTERP_SEGMENT"
+              aarch64-linux-gnu-readelf -d "$f" 2>/dev/null | grep NEEDED || echo "NO_DYNAMIC_NEEDED"
+              echo
+            done
+          } | tee official-arm64-avr-probe.txt
+
+      - name: Decide Android portability
+        run: |
+          if grep -q "NO_INTERP_SEGMENT" official-arm64-avr-probe.txt && ! grep -q "Shared object file" official-arm64-avr-probe.txt; then
+            echo "Probe completed; inspect per-binary results."
+          fi
+          cat official-arm64-avr-probe.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: official-arm64-avr-probe
+          path: official-arm64-avr-probe.txt
+          if-no-files-found: error

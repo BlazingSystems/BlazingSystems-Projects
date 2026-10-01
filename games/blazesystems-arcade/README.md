@@ -17,4 +17,6 @@ This edition intentionally does **not** bundle:
 
 The demonstration focuses on the user-interface concept, local browser execution, keyboard controls, and a lightweight arcade experience.
 
-Open `index.html` directly in a browser.
+## Preview
+
+Open `preview.html` for the portfolio overview, then launch `index.html` for the working demonstration.

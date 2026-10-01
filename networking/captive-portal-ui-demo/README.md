@@ -12,3 +12,7 @@ This build is intentionally detached from any commercial PisoWiFi/hotspot produc
 The entire demo runs locally in the browser and sends no network requests.
 
 Open `index.html` directly in a browser.
+
+## Preview
+
+Open `preview.html` for the portfolio overview, then launch `index.html` for the working demonstration.

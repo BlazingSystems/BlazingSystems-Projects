@@ -11,4 +11,6 @@ The repository version uses fictional names and values only. It is not tied to a
 
 ## Run
 
-Open `index.html` directly in a browser. No server or external library is required.
+## Preview
+
+Open `preview.html` for the portfolio overview, then launch `index.html` for the working demonstration.

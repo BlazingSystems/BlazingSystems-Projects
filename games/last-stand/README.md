@@ -24,3 +24,7 @@ A lightweight endless-defense game built as a single browser file with no extern
 ## Run
 
 Open `index.html` in a modern browser.
+
+## Preview
+
+Open `preview.html` for the portfolio overview, then launch `index.html` for the working demonstration.

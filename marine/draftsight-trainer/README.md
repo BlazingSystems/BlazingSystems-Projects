@@ -17,4 +17,6 @@ A generic browser exercise for practicing visual estimation of a waterline again
 
 This is a training illustration only. It does not reproduce a company-specific simulator, vessel drawing, survey form, or proprietary marking template.
 
-Open `index.html` directly in a browser.
+## Preview
+
+Open `preview.html` for the portfolio overview, then launch `index.html` for the working demonstration.

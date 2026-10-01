@@ -27,7 +27,7 @@ Projects in this repository emphasize:
 
 ## Live Preview
 
-The repository includes a portfolio landing page at `index.html`. HTML projects use an `index.html` entry point so the same tree can be published through GitHub Pages without restructuring.
+The repository includes a portfolio landing page at `index.html`. Finished HTML projects use a `preview.html` portfolio landing page that links to the runnable `index.html` demonstration. This keeps project presentation separate from the working demo while remaining GitHub Pages friendly.
 
 ## Technical Notes
 

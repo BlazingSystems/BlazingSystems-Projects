@@ -25,3 +25,7 @@ Open `index.html` in a modern browser. No server is required.
 ## Validation Boundary
 
 Calculation features are educational demonstrations. Operational marine surveying requires vessel-specific data, approved procedures, and independent verification.
+
+## Preview
+
+Open `preview.html` for the portfolio overview, then launch `index.html` for the working demonstration.

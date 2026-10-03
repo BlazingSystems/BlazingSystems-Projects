@@ -1,40 +1,46 @@
-# BlazingSystems — Project Portfolio
+<div align="center">
 
-A curated collection of practical software, embedded-system, networking, and browser-based projects developed as engineering exercises and working prototypes.
+# BlazingSystems — Projects
 
-## Portfolio Structure
+**Curated working builds, public demonstrations, and source-ready portfolio projects**
+
+[Profile](https://github.com/BlazingSystems) ·
+[Labs](https://github.com/BlazingSystems/BlazingSystems-Labs) ·
+[Experiments](https://github.com/BlazingSystems/BlazingSystems-Experiments) ·
+[Archives](https://github.com/BlazingSystems/BlazingSystems-Archives)
+
+</div>
+
+---
+
+## Portfolio
 
 | Area | Project | Type | Status |
 |---|---|---|---|
-| Marine tools | Marine Operations Logbook | Offline web application | Demonstration build |
-| Marine tools | Draft Reading Trainer | Offline training application | Working build |
-| Marine tools | Daily Operations Update | Offline reporting tool | Demonstration build |
-| Games | BlazeSystems Arcade | Browser game/launcher study | Demonstration build |
-| Games | Last Stand | HTML5 strategy game | Working build |
-| Embedded | ESP8266 Thermostat | Firmware + local web UI | Source-ready |
-| Networking | Captive Portal UI | Standalone portal interface study | Demonstration build |
+| [Marine](marine/) | Marine Operations Logbook | Offline web application | Demonstration build |
+| [Marine](marine/) | Draft Reading Trainer | Browser training tool | Working build |
+| [Marine](marine/) | Daily Operations Update | Offline reporting tool | Demonstration build |
+| [Games](games/) | BlazeSystems Arcade | Browser launcher / mini-game study | Demonstration build |
+| [Games](games/) | Last Stand | HTML5 strategy game | Working build |
+| [Embedded](embedded/) | ESP8266 Thermostat | Firmware + local web UI | Source-ready |
+| [Networking](networking/) | Captive Portal UI Demo | Standalone interface study | Demonstration build |
 
-## Design Principles
+## Repository Layout
 
-Projects in this repository emphasize:
+- **[embedded/](embedded/)** — microcontroller firmware and local device interfaces
+- **[games/](games/)** — browser games and launcher studies
+- **[marine/](marine/)** — generic offline training/reporting demonstrations
+- **[networking/](networking/)** — network-interface and portal demonstrations
+- **[index.html](index.html)** — browser-friendly portfolio landing page
 
-- offline-first operation;
-- compatibility with modest hardware;
-- local data storage where practical;
-- simple interfaces that remain usable without cloud services;
-- clear separation between demonstrations and hardware-validated builds;
-- synthetic sample data in public examples.
+## Project Standard
 
-## Live Preview
+A project belongs here when it has a clear public purpose, a usable demonstration or coherent source tree, documented limitations, and no unresolved confidentiality or redistribution issue.
 
-The repository includes a portfolio landing page at `index.html`. Finished HTML projects use a `preview.html` portfolio landing page that links to the runnable `index.html` demonstration. This keeps project presentation separate from the working demo while remaining GitHub Pages friendly.
+Browser projects use synthetic sample data. Hardware projects remain explicit about what still requires physical validation.
 
-## Technical Notes
+## Public-Safe Policy
 
-Hardware-dependent projects should be tested on the intended board and electrical load before deployment. Browser demonstrations are educational/portfolio builds and are not substitutes for certified commercial, maritime, medical, safety, or industrial systems.
-
-## Repository Notice
-
-Public examples are intentionally generic. They do not contain client records, employer records, production credentials, private network backups, or proprietary operational datasets.
+This repository excludes employer/client records, private credentials, proprietary operational forms, commercial ROM/APK payloads, raw router backups and private keys.
 
 See [NOTICE.md](NOTICE.md) for the public-demo policy.

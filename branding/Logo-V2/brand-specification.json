@@ -1,0 +1,35 @@
+{
+  "title": "Logo V2",
+  "version": "2.0.0",
+  "owner": "BlazingSystems",
+  "source_filename": "113704.png",
+  "source_width": 1536,
+  "source_height": 1024,
+  "source_encoded_format": "JPEG",
+  "source_sha256": "56fb15d1ed4faa44af7dafc3defa5e3eb04252966df853bd96f587a7a3d9132d",
+  "source_bytes": 234556,
+  "palette": {
+    "Blaze Blue": "#0066FF",
+    "Electric Blue": "#00B0FF",
+    "Deep Blue": "#001A3D",
+    "Light Blue": "#7DD3FF"
+  },
+  "typeface": "Montserrat",
+  "variants": [
+    "primary",
+    "horizontal",
+    "stacked",
+    "icon only",
+    "on dark",
+    "on light",
+    "monochrome black",
+    "monochrome white"
+  ],
+  "shown_mockups": [
+    "signage",
+    "business card",
+    "apparel"
+  ],
+  "source_integrity": "original provided raster image must remain unaltered",
+  "publication_note": "GitHub metadata only; binary assets available in locally prepared chat ZIP, not yet committed"
+}

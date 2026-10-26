@@ -24,6 +24,7 @@
 | [Games](games/) | Last Stand | HTML5 strategy game | Working build |
 | [Embedded](embedded/) | ESP8266 Thermostat | Firmware + local web UI | Source-ready |
 | [Networking](networking/) | Captive Portal UI Demo | Standalone interface study | Demonstration build |
+| [Networking](networking/blazenetmonitor/) | **BlazeNetMonitor v1.0.0** | Windows native network monitor + installer | **Official release** |
 
 ## Repository Layout
 

@@ -1,0 +1,71 @@
+name: Promote BlazeNetMonitor 1.0.0
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/promote-blazenetmonitor-v1.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Copy exact completed source into networking
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch feature/blazenetmonitor-v0.1.0 https://github.com/BlazingSystems/BlazingSystems-Experiments.git "$RUNNER_TEMP/blaze-source"
+          actual="$(git -C "$RUNNER_TEMP/blaze-source" rev-parse HEAD)"
+          expected="ce7be806740a97958c6fec13e9b4976b4b1af537"
+          if [ "$actual" != "$expected" ]; then echo "Source HEAD changed: $actual"; exit 1; fi
+          mkdir -p networking/blazenetmonitor
+          cp -R "$RUNNER_TEMP/blaze-source/expiremental/BlazeNetMonitor/." networking/blazenetmonitor/
+          cat > networking/blazenetmonitor/PROVENANCE.md <<'EOT'
+          # BlazeNetMonitor v1.0.0 — completed
+          
+          Windows 10/11 x64 installer, original WinForms source, CI tests and Inno Setup project.
+          
+          Source: https://github.com/BlazingSystems/BlazingSystems-Experiments/tree/feature/blazenetmonitor-v0.1.0/expiremental/BlazeNetMonitor
+          
+          Source commit: `ce7be806740a97958c6fec13e9b4976b4b1af537`
+          
+          Pre-promotion release: https://github.com/BlazingSystems/BlazingSystems-Experiments/releases/tag/blazenetmonitor-v1.0.0
+          
+          Official releases: https://github.com/BlazingSystems/BlazingSystems-Projects/releases
+          
+          Verified 107 Windows tests and installer/uninstaller smoke checks at release; user separately confirmed installer completed successfully. App historical top-five requires separately supplied Windows SRUM records.
+          EOT
+          git add networking/blazenetmonitor
+          git diff --cached --stat
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --cached --quiet; then
+            git commit -m "feat(networking): promote verified BlazeNetMonitor v1.0.0 source"
+            git push origin HEAD:main
+          fi
+      - name: Download and validate v1.0.0 official installer
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          gh release download blazenetmonitor-v1.0.0 --repo BlazingSystems/BlazingSystems-Experiments --pattern 'BlazeNetMonitor-Setup-v1.0.0.exe' --dir assets
+          test -s assets/BlazeNetMonitor-Setup-v1.0.0.exe
+          actual_size="$(stat -c %s assets/BlazeNetMonitor-Setup-v1.0.0.exe)"
+          if [ "$actual_size" -ne 35441581 ]; then echo "Installer size mismatch $actual_size"; exit 1; fi
+          sha256sum assets/BlazeNetMonitor-Setup-v1.0.0.exe | tee assets/BlazeNetMonitor-Setup-v1.0.0.sha256
+      - name: Publish official completed-project release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view blazenetmonitor-v1.0.0 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Official v1.0.0 release already exists; refusing overwrite"
+            exit 1
+          fi
+          gh release create blazenetmonitor-v1.0.0 assets/BlazeNetMonitor-Setup-v1.0.0.exe assets/BlazeNetMonitor-Setup-v1.0.0.sha256 --repo "$GITHUB_REPOSITORY" --target main --title 'BlazeNetMonitor v1.0.0 — Official Windows Installer' --latest --notes 'Official completed Blaze Systems project. Windows 10/11 x64 setup includes PayPal support page, Program Files installation, shortcuts and startup fallback, Thank You page and developer Facebook link. 107 automated tests and Windows silent install/uninstall checks passed at source release. Windows unsigned publisher warning may appear. Original development and 0.x history remain linked under BlazingSystems-Experiments; past binaries will be stored in Google Drive archives before any release-file cleanup.'
